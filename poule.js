@@ -16,11 +16,6 @@ const debug = document.getElementById("debug");
 
 let listeMatchsPoule = [];
 
-/*
- * ============================================================
- * AFFICHAGE D'ÉTAT
- * ============================================================
- */
 function afficherStatus(message, type = "") {
   status.className = "";
   status.innerHTML = "";
@@ -62,16 +57,10 @@ function verifierUrl(url) {
   }
 }
 
-/*
- * ============================================================
- * PARSER UN MATCH
- * ============================================================
- */
 function extraireDonnees(html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
 
-  /* Verification de présence de la page 404 FFHandball */
   if (doc.querySelector('smartfire-component[name="page-404"]')) {
     return null;
   }
@@ -87,37 +76,42 @@ function extraireDonnees(html) {
 
   const textareaJoueurs = document.createElement("textarea");
   textareaJoueurs.innerHTML = attributesJoueurs;
-  attributesJoueurs = textareaJoueurs.value;
-
+  
   let joueursData;
   try {
-    joueursData = JSON.parse(attributesJoueurs);
+    joueursData = JSON.parse(textareaJoueurs.value);
   } catch {
     return null;
   }
 
-  /* Score & Infos */
-  const scoreComponent = doc.querySelector(
-    'smartfire-component[name="competitions---competition-score"]'
-  );
-
+  // Score
+  const scoreComponent = doc.querySelector('smartfire-component[name="competitions---competition-score"]');
   let scoreData = null;
   if (scoreComponent) {
-    let attributesScore = scoreComponent.getAttribute("attributes");
-    if (attributesScore) {
-      const textareaScore = document.createElement("textarea");
-      textareaScore.innerHTML = attributesScore;
-      try {
-        scoreData = JSON.parse(textareaScore.value);
-      } catch (e) {
-        console.warn("Erreur parsing score:", e);
-      }
+    let attr = scoreComponent.getAttribute("attributes");
+    if (attr) {
+      const ta = document.createElement("textarea");
+      ta.innerHTML = attr;
+      try { scoreData = JSON.parse(ta.value); } catch (e) {}
+    }
+  }
+
+  // Rematch
+  const rematchComponent = doc.querySelector('smartfire-component[name="competitions---rematch"]');
+  let rematchData = null;
+  if (rematchComponent) {
+    let attr = rematchComponent.getAttribute("attributes");
+    if (attr) {
+      const ta = document.createElement("textarea");
+      ta.innerHTML = attr;
+      try { rematchData = JSON.parse(ta.value); } catch (e) {}
     }
   }
 
   return {
     ...joueursData,
-    score: scoreData
+    score: scoreData,
+    rematch: rematchData
   };
 }
 
@@ -136,11 +130,6 @@ async function chargerMatch(url) {
   }
 }
 
-/*
- * ============================================================
- * EXPLORATION DE LA POULE
- * ============================================================
- */
 async function explorerPoule() {
   const targetUrl = input.value.trim();
   vueListe.innerHTML = "";
@@ -159,17 +148,16 @@ async function explorerPoule() {
   const matchInitial = await chargerMatch(targetUrl);
 
   if (!matchInitial) {
-    afficherStatus("Impossible d'extraire les données du match saisi.", "error");
+    afficherStatus("Impossible d'extraire les données du match.", "error");
     button.disabled = false;
     return;
   }
 
   listeMatchsPoule.push(matchInitial);
 
-  /* Extraction de l'ID et de la structure de l'URL */
   const urlParts = targetUrl.match(/(.*\/rencontre-)(\d+)(\/?.*)/);
   if (!urlParts) {
-    afficherStatus("Format d'URL non reconnu pour le balayage automatique.", "error");
+    afficherStatus("Format d'URL non reconnu.", "error");
     button.disabled = false;
     return;
   }
@@ -178,7 +166,7 @@ async function explorerPoule() {
   const baseId = parseInt(urlParts[2], 10);
   const endUrl = urlParts[3] || "";
 
-  /* Recherche vers l'AVANT (IDs croissants) */
+  // Scan vers l'AVANT
   let erreursConsecutives = 0;
   let currentId = baseId + 1;
 
@@ -196,7 +184,7 @@ async function explorerPoule() {
     currentId++;
   }
 
-  /* Recherche vers l'ARRIÈRE (IDs décroissants) */
+  // Scan vers l'ARRIÈRE
   erreursConsecutives = 0;
   currentId = baseId - 1;
 
@@ -206,7 +194,7 @@ async function explorerPoule() {
     const data = await chargerMatch(testUrl);
 
     if (data) {
-      listeMatchsPoule.unshift(data); // Ajoute au début
+      listeMatchsPoule.unshift(data);
       erreursConsecutives = 0;
     } else {
       erreursConsecutives++;
@@ -215,72 +203,118 @@ async function explorerPoule() {
   }
 
   button.disabled = false;
-  afficherStatus(`${listeMatchsPoule.length} match(s) trouvé(s) dans cette poule !`, "success");
+  afficherStatus(`${listeMatchsPoule.length} match(s) trouvé(s) !`, "success");
 
-  afficherListeMatchs();
+  afficherListeParJournee();
 }
 
 /*
  * ============================================================
- * AFFICHAGE LISTE
+ * AFFICHAGE DES MATCHS REGROUPÉS PAR JOURNÉE
  * ============================================================
  */
-function afficherListeMatchs() {
-  vueListe.innerHTML = `
-    <div class="section-header">
-      <div class="section-title">Matchs de la poule</div>
-    </div>
-  `;
+function afficherListeParJournee() {
+  vueListe.innerHTML = "";
 
-  listeMatchsPoule.forEach((match, index) => {
-    const eq1 = match.equipe1?.libelle || "Équipe 1";
-    const eq2 = match.equipe2?.libelle || "Équipe 2";
+  // Groupement par journeeNumero
+  const journeesMap = new Map();
 
-    const score1 = match.score?.home?.score ?? match.statsJoueurs
-      .filter(j => String(j.equipeId) === String(match.equipe1.id))
-      .reduce((t, j) => t + (parseInt(j.buts) || 0), 0);
+  listeMatchsPoule.forEach(match => {
+    const numJournee = match.rematch?.rencontre?.journeeNumero || "Non classés";
+    if (!journeesMap.has(numJournee)) {
+      journeesMap.set(numJournee, []);
+    }
+    journeesMap.get(numJournee).push(match);
+  });
 
-    const score2 = match.score?.away?.score ?? match.statsJoueurs
-      .filter(j => String(j.equipeId) === String(match.equipe2.id))
-      .reduce((t, j) => t + (parseInt(j.buts) || 0), 0);
+  // Tri des journées numériquement
+  const clesTriées = Array.from(journeesMap.keys()).sort((a, b) => {
+    if (a === "Non classés") return 1;
+    if (b === "Non classés") return -1;
+    return parseInt(a) - parseInt(b);
+  });
 
-    const logo1 = match.score?.home?.flag?.url;
-    const logo2 = match.score?.away?.flag?.url;
-
-    const img1 = logo1 ? `<img src="${logo1}" style="width: 28px; height: 28px; object-fit: contain;">` : `<i class="ri-team-line"></i>`;
-    const img2 = logo2 ? `<img src="${logo2}" style="width: 28px; height: 28px; object-fit: contain;">` : `<i class="ri-team-line"></i>`;
-
-    const card = document.createElement("div");
-    card.className = "card";
-    card.style.cursor = "pointer";
-    card.style.marginBottom = "12px";
-
-    card.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px;">
-        <div style="flex: 1; display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px;">
-          ${img1}
-          <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${eq1}</span>
-        </div>
-
-        <div style="font-size: 18px; font-weight: 800; color: var(--primary); padding: 0 8px;">
-          ${score1} : ${score2}
-        </div>
-
-        <div style="flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-weight: 700; font-size: 13px; text-align: right;">
-          <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${eq2}</span>
-          ${img2}
-        </div>
+  clesTriées.forEach(numJournee => {
+    const titreHeader = document.createElement("div");
+    titreHeader.className = "section-header";
+    titreHeader.style.marginTop = "16px";
+    titreHeader.innerHTML = `
+      <div class="section-title">
+        ${numJournee !== "Non classés" ? `Journée ${numJournee}` : "Matchs"}
       </div>
     `;
+    vueListe.appendChild(titreHeader);
 
-    card.addEventListener("click", () => afficherDetailMatch(index));
-    vueListe.appendChild(card);
+    const matchsJournee = journeesMap.get(numJournee);
+
+    matchsJournee.forEach(match => {
+      const matchIndex = listeMatchsPoule.indexOf(match);
+      const eq1 = match.equipe1?.libelle || "Équipe 1";
+      const eq2 = match.equipe2?.libelle || "Équipe 2";
+
+      const score1 = match.score?.home?.score ?? match.statsJoueurs
+        .filter(j => String(j.equipeId) === String(match.equipe1.id))
+        .reduce((t, j) => t + (parseInt(j.buts) || 0), 0);
+
+      const score2 = match.score?.away?.score ?? match.statsJoueurs
+        .filter(j => String(j.equipeId) === String(match.equipe2.id))
+        .reduce((t, j) => t + (parseInt(j.buts) || 0), 0);
+
+      const logo1 = match.score?.home?.flag?.url;
+      const logo2 = match.score?.away?.flag?.url;
+
+      const img1 = logo1 ? `<img src="${logo1}" style="width: 24px; height: 24px; object-fit: contain; flex-shrink: 0;">` : `<i class="ri-team-line" style="font-size: 20px;"></i>`;
+      const img2 = logo2 ? `<img src="${logo2}" style="width: 24px; height: 24px; object-fit: contain; flex-shrink: 0;">` : `<i class="ri-team-line" style="font-size: 20px;"></i>`;
+
+      // Formater la date
+      let dateString = "";
+      if (match.rematch?.rencontre?.date) {
+        const d = new Date(match.rematch.rencontre.date.replace(" ", "T"));
+        if (!isNaN(d.getTime())) {
+          dateString = d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + " - " + d.toLocaleTimeString("fr-FR", { hour: "2digit", minute: "2digit" });
+        }
+      }
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.style.cursor = "pointer";
+      card.style.marginBottom = "10px";
+      card.style.padding = "10px 12px";
+
+      card.innerHTML = `
+        ${dateString ? `<div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; text-align: center;">${dateString}</div>` : ""}
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+          
+          <!-- Équipe Domicile -->
+          <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px;">
+            ${img1}
+            <span style="font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eq1}">${eq1}</span>
+          </div>
+
+          <!-- Score -->
+          <div style="font-size: 16px; font-weight: 800; color: var(--primary); padding: 2px 8px; flex-shrink: 0; background: rgba(0,0,0,0.03); border-radius: 6px; white-space: nowrap;">
+            ${score1} : ${score2}
+          </div>
+
+          <!-- Équipe Extérieur -->
+          <div style="flex: 1; min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 6px; text-align: right;">
+            <span style="font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eq2}">${eq2}</span>
+            ${img2}
+          </div>
+
+        </div>
+      `;
+
+      card.addEventListener("click", () => afficherDetailMatch(matchIndex));
+      vueListe.appendChild(card);
+    });
   });
 }
 
 /*
  * ============================================================
- * AFFICHAGE DÉTAIL MATCH (IDENTIQUE À INDEX)
+ * AFFICHAGE DÉTAIL D'UN MATCH
  * ============================================================
  */
 function afficherEquipe(equipe, joueurs, logo = null) {
@@ -305,18 +339,18 @@ function afficherEquipe(equipe, joueurs, logo = null) {
   });
 
   const logoHTML = logo
-    ? `<img src="${logo}" style="width: 48px; height: 48px; object-fit: contain;">`
+    ? `<img src="${logo}" style="width: 40px; height: 40px; object-fit: contain; flex-shrink: 0;">`
     : `<div class="card-icon"><i class="ri-team-line"></i></div>`;
 
   return `
     <div class="card">
       <div class="card-header">
         ${logoHTML}
-        <div class="card-title">
-          <div style="font-size: 16px; font-weight: 800;">${equipe.libelle || "Équipe"}</div>
+        <div class="card-title" style="min-width: 0;">
+          <div style="font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${equipe.libelle || "Équipe"}</div>
           <div style="font-size: 12px; color: var(--text-muted); font-weight: 500;">${joueursEquipe.length} joueur(s)</div>
         </div>
-        <div class="card-badge">Total: ${totalButs} but(s)</div>
+        <div class="card-badge" style="flex-shrink: 0;">Total: ${totalButs} but(s)</div>
       </div>
       <div class="favorites-list">${cartesJoueurs}</div>
     </div>
@@ -338,28 +372,50 @@ function afficherDetailMatch(index) {
     .filter(j => String(j.equipeId) === String(data.equipe2.id))
     .reduce((t, j) => t + (parseInt(j.buts) || 0), 0);
 
+  let dateFormatted = "";
+  let journeeTexte = "";
+
+  const rencontreInfo = data.rematch?.rencontre;
+  if (rencontreInfo) {
+    if (rencontreInfo.journeeNumero) journeeTexte = `Journée ${rencontreInfo.journeeNumero}`;
+    if (rencontreInfo.date) {
+      const d = new Date(rencontreInfo.date.replace(" ", "T"));
+      if (!isNaN(d.getTime())) {
+        dateFormatted = d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) + " à " + d.toLocaleTimeString("fr-FR", { hour: "2digit", minute: "2digit" });
+      }
+    }
+  }
+
   const logoHTML1 = logoEquipe1 
-    ? `<img src="${logoEquipe1}" style="width: 52px; height: 52px; object-fit: contain;">`
+    ? `<img src="${logoEquipe1}" style="width: 44px; height: 44px; object-fit: contain;">`
     : `<div class="card-icon" style="margin: 0;"><i class="ri-team-line"></i></div>`;
 
   const logoHTML2 = logoEquipe2 
-    ? `<img src="${logoEquipe2}" style="width: 52px; height: 52px; object-fit: contain;">`
+    ? `<img src="${logoEquipe2}" style="width: 44px; height: 44px; object-fit: contain;">`
     : `<div class="card-icon" style="margin: 0;"><i class="ri-team-line"></i></div>`;
 
   detailContenu.innerHTML = `
-    <div class="card" style="margin-bottom: 20px; text-align: center;">
-      <div style="display: flex; align-items: center; justify-content: space-around; gap: 12px;">
-        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+    <div class="card" style="margin-bottom: 20px; padding: 14px; text-align: center;">
+      ${journeeTexte || dateFormatted ? `
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px;">
+          ${journeeTexte} ${journeeTexte && dateFormatted ? "•" : ""} ${dateFormatted}
+        </div>
+      ` : ""}
+
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;">
           ${logoHTML1}
-          <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); line-height: 1.2;">${data.equipe1.libelle}</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); line-height: 1.2; text-align: center; width: 100%; word-break: break-word;">${data.equipe1.libelle}</div>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 90px;">
-          <div style="font-size: 26px; font-weight: 800; color: var(--primary); letter-spacing: 1px;">${scoreEquipe1} : ${scoreEquipe2}</div>
-          <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-top: 2px;">Score final</span>
+
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; padding: 0 4px;">
+          <div style="font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: 0.5px; white-space: nowrap;">${scoreEquipe1} : ${scoreEquipe2}</div>
+          <span style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-top: 2px;">Score final</span>
         </div>
-        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;">
           ${logoHTML2}
-          <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); line-height: 1.2;">${data.equipe2.libelle}</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); line-height: 1.2; text-align: center; width: 100%; word-break: break-word;">${data.equipe2.libelle}</div>
         </div>
       </div>
     </div>
@@ -376,11 +432,6 @@ function afficherDetailMatch(index) {
   vueDetail.style.display = "block";
 }
 
-/*
- * ============================================================
- * ÉVÉNEMENTS
- * ============================================================
- */
 button.addEventListener("click", explorerPoule);
 input.addEventListener("keydown", event => {
   if (event.key === "Enter") explorerPoule();
