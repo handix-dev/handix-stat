@@ -189,7 +189,7 @@ async function explorerPoule() {
   const baseId = parseInt(urlParts[2], 10);
   const endUrl = urlParts[3] || "";
 
-  // Scan vers l'avant (avec vérification de 5 matchs non joués 0-0 consécutifs ou 2 erreurs 404)
+  // Scan vers l'avant (arrêt si 5 matchs à 0-0 consécutifs)
   let err = 0, zeroZeroConsecutifs = 0, currentId = baseId + 1;
   while (err < 2 && zeroZeroConsecutifs < 5) {
     const data = await chargerMatch(`${baseUrl}${currentId}${endUrl}`);
@@ -265,7 +265,7 @@ function genererClassementEquipes() {
 
     const { s1, s2 } = ObtenirScoresMatch(m);
 
-    // Exclusion explicite des matchs 0-0 (non joués)
+    // Exclusion des matchs non joués (0-0)
     if (s1 > 0 || s2 > 0) {
       equipes[id1].j++; equipes[id2].j++;
       equipes[id1].bp += s1; equipes[id1].bc += s2;
@@ -292,7 +292,7 @@ function genererClassementEquipes() {
   });
 
   let html = `
-    <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); color: var(--primary);">
       <thead>
         <tr style="background: var(--primary); color: #fff; height: 36px; font-size: 11px;">
           <th style="padding: 4px;">#</th>
@@ -313,6 +313,8 @@ function genererClassementEquipes() {
 
   classement.forEach((eq, index) => {
     const diff = eq.bp - eq.bc;
+    const diffTexte = diff > 0 ? `+${diff}` : `${diff}`;
+    
     const formeHTML = eq.forme.slice(-5).map(f => {
       let bg = "#e63946";
       if (f === "V") bg = "#2a9d8f";
@@ -321,17 +323,17 @@ function genererClassementEquipes() {
     }).join("");
 
     html += `
-      <tr style="border-bottom: 1px solid rgba(0,0,0,0.05); height: 40px; font-weight: 500;">
-        <td style="font-weight: 800; padding: 4px;">${index + 1}</td>
+      <tr style="border-bottom: 1px solid rgba(0,0,0,0.05); height: 40px; font-weight: 500; color: var(--primary);">
+        <td style="font-weight: 800; padding: 4px; color: var(--primary);">${index + 1}</td>
         <td style="text-align: left; font-weight: 700; padding: 4px 8px; white-space: nowrap; color: var(--primary);">${eq.name}</td>
         <td style="font-weight: 800; color: var(--primary); padding: 4px;">${eq.pts}</td>
-        <td style="padding: 4px;">${eq.j}</td>
-        <td style="padding: 4px;">${eq.g}</td>
-        <td style="padding: 4px;">${eq.n}</td>
-        <td style="padding: 4px;">${eq.p}</td>
-        <td style="padding: 4px; color: var(--text-muted);">${eq.bp}</td>
-        <td style="padding: 4px; color: var(--text-muted);">${eq.bc}</td>
-        <td style="padding: 4px; font-weight: 700;">${diff > 0 ? "+" + diff : diff}</td>
+        <td style="padding: 4px; color: var(--primary);">${eq.j}</td>
+        <td style="padding: 4px; color: var(--primary);">${eq.g}</td>
+        <td style="padding: 4px; color: var(--primary);">${eq.n}</td>
+        <td style="padding: 4px; color: var(--primary);">${eq.p}</td>
+        <td style="padding: 4px; font-weight: 600; color: var(--primary);">${eq.bp}</td>
+        <td style="padding: 4px; font-weight: 600; color: var(--primary);">${eq.bc}</td>
+        <td style="padding: 4px; font-weight: 800; color: var(--primary);">${diffTexte}</td>
         <td style="padding: 4px 8px; white-space: nowrap;">${formeHTML || "-"}</td>
       </tr>
     `;
@@ -348,7 +350,6 @@ function genererClassementButeurs() {
     if (!m.statsJoueurs) return;
 
     const { s1, s2 } = ObtenirScoresMatch(m);
-    // Ignorer également les matchs non joués (0-0) pour la comptabilisation des apparitions des joueurs
     if (s1 === 0 && s2 === 0) return;
 
     const eqMap = {};
@@ -386,7 +387,7 @@ function genererClassementButeurs() {
   });
 
   let html = `
-    <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); color: var(--primary);">
       <thead>
         <tr style="background: var(--primary); color: #fff; height: 36px; font-size: 11px;">
           <th style="padding: 4px;">#</th>
@@ -402,13 +403,13 @@ function genererClassementButeurs() {
 
   listeJoueurs.slice(0, 50).forEach((j, index) => {
     html += `
-      <tr style="border-bottom: 1px solid rgba(0,0,0,0.05); height: 36px;">
-        <td style="font-weight: 800; padding: 4px;">${index + 1}</td>
+      <tr style="border-bottom: 1px solid rgba(0,0,0,0.05); height: 36px; color: var(--primary);">
+        <td style="font-weight: 800; padding: 4px; color: var(--primary);">${index + 1}</td>
         <td style="text-align: left; font-weight: 700; padding: 4px 8px; white-space: nowrap; color: var(--primary);">${j.nom}</td>
         <td style="text-align: left; font-weight: 600; padding: 4px 8px; white-space: nowrap; color: var(--primary);">${j.equipe}</td>
         <td style="font-weight: 800; color: var(--primary); padding: 4px;">${j.buts}</td>
-        <td style="padding: 4px;">${j.matchs}</td>
-        <td style="font-weight: 700; padding: 4px;">${j.ratio}</td>
+        <td style="padding: 4px; color: var(--primary);">${j.matchs}</td>
+        <td style="font-weight: 700; padding: 4px; color: var(--primary);">${j.ratio}</td>
       </tr>
     `;
   });
