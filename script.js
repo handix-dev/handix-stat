@@ -216,7 +216,7 @@ function afficherEquipe(equipe, joueurs, logo = null) {
           </div>
         </div>
         <div class="card-badge">
-          Total: ${totalButs} but(s)
+          ${totalButs} but(s)
         </div>
       </div>
 
