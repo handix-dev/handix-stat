@@ -232,7 +232,7 @@ function afficherMatch(data) {
           day: "numeric",
           month: "short",
           year: "numeric"
-        }) + " à " + d.toLocaleTimeString("fr-FR", { hour: "2digit", minute: "2digit" });
+        }) + " à " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
       }
     }
   }
