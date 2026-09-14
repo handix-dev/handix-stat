@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Visualisez tous les matchs de votre poule FFHandball.">
+  <title>Handix - Matchs de la Poule</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <!-- RemixIcon -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+  <!-- Feuille de style -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <header>
+    <div class="welcome-section">
+      <div class="welcome-title">
+        <img src="handix-logo.png" alt="HANDIX" style="height: auto; width: 200px;">
+      </div>
+      <div class="welcome-text">Vue d'ensemble de la Poule</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="page">
+
+      <!-- Formulaire de recherche -->
+      <div class="search-container">
+        <input 
+          id="matchUrl" 
+          type="url" 
+          class="search-input" 
+          placeholder="Collez l'URL d'un match de la poule..." 
+          autocomplete="off"
+        >
+        <button id="analyser" class="search-button" title="Scanner la poule" type="button">
+          <i class="ri-search-line"></i>
+        </button>
+      </div>
+
+      <!-- Zone d'état / progression -->
+      <div id="status"></div>
+
+      <!-- VUE 1 : Liste des matchs de la poule -->
+      <div id="vueListe" class="data-container"></div>
+
+      <!-- VUE 2 : Détail du match sélectionné -->
+      <div id="vueDetail" class="data-container" style="display: none;">
+        <button id="btnRetour" class="search-button" style="width: auto; padding: 8px 16px; margin-bottom: 16px; display: inline-flex; align-items: center; gap: 8px;" type="button">
+          <i class="ri-arrow-left-line"></i> Retour aux matchs
+        </button>
+        <div id="detailContenu"></div>
+      </div>
+
+      <!-- Debug -->
+      <pre id="debug" class="debug error-message" style="display: none; text-align: left; overflow-x: auto;"></pre>
+
+    </section>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <div class="nav-item" onclick="window.location.href='salles.html'">
+      <div class="nav-icon"><i class="ri-map-pin-line"></i></div>
+      <div class="nav-label">Salles</div>
+    </div>
+    <div class="nav-item" onclick="window.location.href='clubs.html'">
+      <div class="nav-icon"><i class="ri-team-line"></i></div>
+      <div class="nav-label">Clubs</div>
+    </div>
+    <div class="nav-item" onclick="window.location.href='index.html'">
+      <div class="nav-icon"><i class="ri-bar-chart-box-line"></i></div>
+      <div class="nav-label">Stats</div>
+    </div>
+    <div class="nav-item active" onclick="window.location.href='poule.html'">
+      <div class="nav-icon"><i class="ri-layout-grid-line"></i></div>
+      <div class="nav-label">Poule</div>
+    </div>
+  </nav>
+
+  <script src="poule.js"></script>
+</body>
+
+</html>
