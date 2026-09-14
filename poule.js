@@ -161,7 +161,7 @@ function extraireDonnees(html) {
 
   const textareaJoueurs = document.createElement("textarea");
   textareaJoueurs.innerHTML = attributesJoueurs;
-  
+
   let joueursData;
   try {
     joueursData = JSON.parse(textareaJoueurs.value);
@@ -213,6 +213,16 @@ async function chargerMatch(url) {
   }
 }
 
+function ObtenirScoresMatch(m) {
+  const id1 = m.equipe1?.id;
+  const id2 = m.equipe2?.id;
+
+  const s1 = m.score?.home?.score ?? (id1 ? m.statsJoueurs?.filter(j => String(j.equipeId) === String(id1)).reduce((t, j) => t + (parseInt(j.buts) || 0), 0) : 0);
+  const s2 = m.score?.away?.score ?? (id2 ? m.statsJoueurs?.filter(j => String(j.equipeId) === String(id2)).reduce((t, j) => t + (parseInt(j.buts) || 0), 0) : 0);
+
+  return { s1: s1 || 0, s2: s2 || 0 };
+}
+
 async function explorerPoule() {
   const targetUrl = input.value.trim();
   vueListe.innerHTML = "";
@@ -251,11 +261,12 @@ async function explorerPoule() {
   const baseId = parseInt(urlParts[2], 10);
   const endUrl = urlParts[3] || "";
 
-  // Scan avant
+  // Scan avant (arrêt si 5 matchs consécutifs à 0-0 ou 2 erreurs 404)
   let erreursConsecutives = 0;
+  let zeroZeroConsecutifs = 0;
   let currentId = baseId + 1;
 
-  while (erreursConsecutives < 2) {
+  while (erreursConsecutives < 2 && zeroZeroConsecutifs < 5) {
     afficherStatus(`Recherche des matchs suivants (ID: ${currentId})...`, "loading");
     const testUrl = `${baseUrl}${currentId}${endUrl}`;
     const data = await chargerMatch(testUrl);
@@ -263,17 +274,25 @@ async function explorerPoule() {
     if (data) {
       listeMatchsPoule.push(data);
       erreursConsecutives = 0;
+
+      const { s1, s2 } = ObtenirScoresMatch(data);
+      if (s1 === 0 && s2 === 0) {
+        zeroZeroConsecutifs++;
+      } else {
+        zeroZeroConsecutifs = 0;
+      }
     } else {
       erreursConsecutives++;
     }
     currentId++;
   }
 
-  // Scan arrière
+  // Scan arrière (arrêt si 5 matchs consécutifs à 0-0 ou 2 erreurs 404)
   erreursConsecutives = 0;
+  zeroZeroConsecutifs = 0;
   currentId = baseId - 1;
 
-  while (erreursConsecutives < 2 && currentId > 0) {
+  while (erreursConsecutives < 2 && zeroZeroConsecutifs < 5 && currentId > 0) {
     afficherStatus(`Recherche des matchs précédents (ID: ${currentId})...`, "loading");
     const testUrl = `${baseUrl}${currentId}${endUrl}`;
     const data = await chargerMatch(testUrl);
@@ -281,6 +300,13 @@ async function explorerPoule() {
     if (data) {
       listeMatchsPoule.unshift(data);
       erreursConsecutives = 0;
+
+      const { s1, s2 } = ObtenirScoresMatch(data);
+      if (s1 === 0 && s2 === 0) {
+        zeroZeroConsecutifs++;
+      } else {
+        zeroZeroConsecutifs = 0;
+      }
     } else {
       erreursConsecutives++;
     }
@@ -336,13 +362,7 @@ function afficherListeParJournee() {
       const eq1 = match.equipe1?.libelle || "Équipe 1";
       const eq2 = match.equipe2?.libelle || "Équipe 2";
 
-      const score1 = match.score?.home?.score ?? match.statsJoueurs
-        .filter(j => String(j.equipeId) === String(match.equipe1.id))
-        .reduce((t, j) => t + (parseInt(j.buts) || 0), 0);
-
-      const score2 = match.score?.away?.score ?? match.statsJoueurs
-        .filter(j => String(j.equipeId) === String(match.equipe2.id))
-        .reduce((t, j) => t + (parseInt(j.buts) || 0), 0);
+      const { s1: score1, s2: score2 } = ObtenirScoresMatch(match);
 
       const logo1 = match.score?.home?.flag?.url;
       const logo2 = match.score?.away?.flag?.url;
@@ -439,13 +459,7 @@ function afficherDetailMatch(index) {
   const logoEquipe1 = data.score?.home?.flag?.url || null;
   const logoEquipe2 = data.score?.away?.flag?.url || null;
 
-  const scoreEquipe1 = data.score?.home?.score ?? data.statsJoueurs
-    .filter(j => String(j.equipeId) === String(data.equipe1.id))
-    .reduce((t, j) => t + (parseInt(j.buts) || 0), 0);
-
-  const scoreEquipe2 = data.score?.away?.score ?? data.statsJoueurs
-    .filter(j => String(j.equipeId) === String(data.equipe2.id))
-    .reduce((t, j) => t + (parseInt(j.buts) || 0), 0);
+  const { s1: scoreEquipe1, s2: scoreEquipe2 } = ObtenirScoresMatch(data);
 
   let dateFormatted = "";
   let journeeTexte = "";
