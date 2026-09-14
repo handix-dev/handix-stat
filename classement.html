@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Classement général et meilleurs buteurs de la poule FFHandball.">
+  <title>Handix - Classement</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <!-- RemixIcon -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+  <!-- Feuille de style -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <header>
+    <div class="welcome-section">
+      <div class="welcome-title">
+        <img src="handix-logo.png" alt="HANDIX" style="height: auto; width: 200px;">
+      </div>
+      <div class="welcome-text">Classements de la Poule</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="page">
+
+      <!-- Formulaire de recherche -->
+      <div class="search-container">
+        <input 
+          id="matchUrl" 
+          type="url" 
+          class="search-input" 
+          placeholder="Collez l'URL d'un match de la poule..." 
+          autocomplete="off"
+        >
+        <button id="analyser" class="search-button" title="Générer les classements" type="button">
+          <i class="ri-search-line"></i>
+        </button>
+      </div>
+
+      <!-- Zone d'affichage des favoris de poules -->
+      <div id="favorisPouleContainer" class="favoris-poule-container" style="display: none;">
+        <div class="favoris-poule-title">Poules enregistrées</div>
+        <div id="favorisPouleList" class="favoris-poule-chips"></div>
+      </div>
+
+      <!-- Zone d'état / progression -->
+      <div id="status"></div>
+
+      <!-- Toggles / Onglets de classement -->
+      <div id="classementToggles" style="display: none; margin: 16px 0 12px 0;">
+        <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 12px;">
+          <button id="btnTabEquipes" class="btn-favori active" style="border-radius: 8px;" type="button">
+            <i class="ri-trophy-line"></i> Classement Équipes
+          </button>
+          <button id="btnTabButeurs" class="btn-favori" style="border-radius: 8px;" type="button">
+            <i class="ri-user-star-line"></i> Meilleurs Buteurs
+          </button>
+        </div>
+
+        <!-- Sous-toggle pour les buteurs (Caché par défaut) -->
+        <div id="subToggleButeurs" style="display: none; justify-content: center; gap: 6px;">
+          <button id="btnSortButs" class="search-button" style="width: auto; padding: 4px 10px; font-size: 11px;" type="button">
+            Total Buts
+          </button>
+          <button id="btnSortRatio" class="search-button" style="width: auto; padding: 4px 10px; font-size: 11px; background: var(--text-muted);" type="button">
+            Moyenne / Match
+          </button>
+        </div>
+      </div>
+
+      <!-- Vue Classement Équipes -->
+      <div id="vueEquipes" class="data-container" style="display: none; overflow-x: auto;"></div>
+
+      <!-- Vue Classement Buteurs -->
+      <div id="vueButeurs" class="data-container" style="display: none; overflow-x: auto;"></div>
+
+    </section>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <div class="nav-item" onclick="window.location.href='poule.html'">
+      <div class="nav-icon"><i class="ri-layout-grid-line"></i></div>
+      <div class="nav-label">Poule</div>
+    </div>
+    <div class="nav-item" onclick="window.location.href='index.html'">
+      <div class="nav-icon"><i class="ri-bar-chart-box-line"></i></div>
+      <div class="nav-label">Stats</div>
+    </div>
+    <div class="nav-item active" onclick="window.location.href='classement.html'">
+      <div class="nav-icon"><i class="ri-trophy-line"></i></div>
+      <div class="nav-label">Classement</div>
+    </div>
+  </nav>
+
+  <script src="classement.js"></script>
+</body>
+
+</html>
