@@ -213,7 +213,7 @@ async function chargerMatch(url) {
   }
 }
 
-// CORRECTION: Assure que les scores sont manipulés comme des nombres (Number / parseInt)
+// Extraire les scores sous forme de NOMBRES purs
 function ObtenirScoresMatch(m) {
   if (!m) return { s1: 0, s2: 0 };
 
@@ -233,9 +233,12 @@ function ObtenirScoresMatch(m) {
       .reduce((t, j) => t + Number(j.buts || 0), 0) : 0;
   }
 
+  const numS1 = Number(s1);
+  const numS2 = Number(s2);
+
   return { 
-    s1: Math.max(0, parseInt(s1, 10) || 0), 
-    s2: Math.max(0, parseInt(s2, 10) || 0) 
+    s1: isNaN(numS1) ? 0 : Math.max(0, numS1), 
+    s2: isNaN(numS2) ? 0 : Math.max(0, numS2) 
   };
 }
 
@@ -333,113 +336,12 @@ async function explorerPoule() {
   afficherStatus(`${listeMatchsPoule.length} match(s) trouvé(s) !`, "success");
   pouleActions.style.display = "flex";
 
-  // On affiche le classement en premier, puis la liste des matchs
-  afficherClassement();
+  // Appel de la fonction définie dans classement.js
+  if (typeof genererEtAfficherClassement === "function") {
+    genererEtAfficherClassement(listeMatchsPoule);
+  }
+
   afficherListeParJournee();
-}
-
-/*
- * ============================================================
- * CALCUL ET AFFICHAGE DU CLASSEMENT
- * ============================================================
- */
-function genererClassement() {
-  const classement = {};
-
-  listeMatchsPoule.forEach(match => {
-    const id1 = match.equipe1?.id;
-    const id2 = match.equipe2?.id;
-    if (!id1 || !id2) return;
-
-    if (!classement[id1]) classement[id1] = { nom: match.equipe1.libelle, pts: 0, joue: 0, v: 0, n: 0, d: 0, bp: 0, bc: 0, diff: 0 };
-    if (!classement[id2]) classement[id2] = { nom: match.equipe2.libelle, pts: 0, joue: 0, v: 0, n: 0, d: 0, bp: 0, bc: 0, diff: 0 };
-
-    const { s1, s2 } = ObtenirScoresMatch(match);
-
-    // Ignorer les matchs non joués (souvent à 0-0 sans stats)
-    if (s1 === 0 && s2 === 0 && (!match.statsJoueurs || match.statsJoueurs.length === 0)) return;
-
-    classement[id1].joue++;
-    classement[id2].joue++;
-    
-    classement[id1].bp += s1;
-    classement[id1].bc += s2;
-    classement[id2].bp += s2;
-    classement[id2].bc += s1;
-
-    // Barème standard Handball : Victoire = 3pts, Nul = 2pts, Défaite = 1pt
-    if (s1 > s2) {
-      classement[id1].v++; classement[id1].pts += 3;
-      classement[id2].d++; classement[id2].pts += 1;
-    } else if (s1 < s2) {
-      classement[id2].v++; classement[id2].pts += 3;
-      classement[id1].d++; classement[id1].pts += 1;
-    } else {
-      classement[id1].n++; classement[id1].pts += 2;
-      classement[id2].n++; classement[id2].pts += 2;
-    }
-  });
-
-  // Calcul propre de la différence de buts
-  Object.values(classement).forEach(eq => {
-    eq.diff = eq.bp - eq.bc;
-  });
-
-  // Tri : Points (desc), Différence de buts (desc), Buts marqués (desc)
-  return Object.values(classement).sort((a, b) => {
-    if (b.pts !== a.pts) return b.pts - a.pts;
-    if (b.diff !== a.diff) return b.diff - a.diff;
-    return b.bp - a.bp;
-  });
-}
-
-function afficherClassement() {
-  const donneesClassement = genererClassement();
-  
-  if (donneesClassement.length === 0) return;
-
-  const tableHTML = donneesClassement.map((eq, index) => `
-    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-      <td style="padding: 8px 4px; text-align: center; font-weight: 700; color: var(--text-muted);">${index + 1}</td>
-      <td style="padding: 8px 4px; font-weight: 600; font-size: 13px; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${eq.nom}</td>
-      <td style="padding: 8px 4px; text-align: center; font-weight: 800; color: var(--primary);">${eq.pts}</td>
-      <td style="padding: 8px 4px; text-align: center;">${eq.joue}</td>
-      <td style="padding: 8px 4px; text-align: center; color: #10b981;">${eq.v}</td>
-      <td style="padding: 8px 4px; text-align: center; color: #f59e0b;">${eq.n}</td>
-      <td style="padding: 8px 4px; text-align: center; color: #ef4444;">${eq.d}</td>
-      <td style="padding: 8px 4px; text-align: center; font-weight: 700;">${eq.diff > 0 ? '+' + eq.diff : eq.diff}</td>
-    </tr>
-  `).join("");
-
-  const classementDiv = document.createElement("div");
-  classementDiv.className = "card";
-  classementDiv.style.marginBottom = "20px";
-  classementDiv.innerHTML = `
-    <div class="section-header" style="padding: 12px 16px 0;">
-      <div class="section-title">Classement de la poule</div>
-    </div>
-    <div style="overflow-x: auto; padding: 0 16px 16px;">
-      <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-        <thead>
-          <tr style="border-bottom: 2px solid rgba(0,0,0,0.1); color: var(--text-muted); text-transform: uppercase; font-size: 10px;">
-            <th style="padding: 8px 4px; text-align: center;">#</th>
-            <th style="padding: 8px 4px; text-align: left;">Équipe</th>
-            <th style="padding: 8px 4px; text-align: center;">Pts</th>
-            <th style="padding: 8px 4px; text-align: center;">J</th>
-            <th style="padding: 8px 4px; text-align: center;">V</th>
-            <th style="padding: 8px 4px; text-align: center;">N</th>
-            <th style="padding: 8px 4px; text-align: center;">D</th>
-            <th style="padding: 8px 4px; text-align: center;">Diff</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${tableHTML}
-        </tbody>
-      </table>
-    </div>
-  `;
-
-  vueListe.appendChild(classementDiv);
 }
 
 /*
@@ -461,7 +363,7 @@ function afficherListeParJournee() {
   const clesTriees = Array.from(journeesMap.keys()).sort((a, b) => {
     if (a === "Non classés") return 1;
     if (b === "Non classés") return -1;
-    return parseInt(a) - parseInt(b);
+    return parseInt(a, 10) - parseInt(b, 10);
   });
 
   clesTriees.forEach(numJournee => {
@@ -534,9 +436,9 @@ function afficherListeParJournee() {
 
 function afficherEquipe(equipe, joueurs, logo = null) {
   const joueursEquipe = joueurs.filter(j => String(j.equipeId) === String(equipe.id));
-  joueursEquipe.sort((a, b) => (parseInt(a.numero) || 999) - (parseInt(b.numero) || 999));
+  joueursEquipe.sort((a, b) => (Number(a.numero) || 999) - (Number(b.numero) || 999));
 
-  const totalButs = joueursEquipe.reduce((t, j) => t + (parseInt(j.buts) || 0), 0);
+  const totalButs = joueursEquipe.reduce((t, j) => t + (Number(j.buts) || 0), 0);
   let cartesJoueurs = "";
 
   joueursEquipe.forEach(joueur => {
@@ -547,7 +449,7 @@ function afficherEquipe(equipe, joueurs, logo = null) {
           <div class="favorite-item-name">${joueur.prenom || ""} ${joueur.nom || ""}</div>
         </div>
         <div class="score-container">
-          <span class="match-score">${parseInt(joueur.buts) || 0}</span>
+          <span class="match-score">${Number(joueur.buts) || 0}</span>
         </div>
       </div>
     `;
@@ -670,5 +572,5 @@ input.addEventListener("keydown", event => {
 });
 btnAjouterFavori.addEventListener("click", ajouterFavoriPoule);
 
-// Initialisation des favoris au chargement de la page
+// Initialisation des favoris
 afficherFavorisBarre();
