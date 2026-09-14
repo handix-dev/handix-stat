@@ -169,6 +169,10 @@ header {
   flex: 1;
 }
 
+.card-icon {
+  margin-right: 14px;
+}
+
 .card-badge {
   background: var(--primary);
   color: white;
