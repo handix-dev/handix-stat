@@ -4,79 +4,205 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Suivez les statistiques des joueurs et matchs de handball avec Handix.">
+
+  <meta
+    name="description"
+    content="Suivez les statistiques des joueurs et matchs de handball avec Handix."
+  >
+
   <title>Handix - Statistiques Match</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&display=swap"
+    rel="stylesheet"
+  >
 
   <!-- RemixIcon -->
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <link
+    href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css"
+    rel="stylesheet"
+  >
 
-  <!-- Feuille de style externe -->
+  <!-- Feuille de style -->
   <link rel="stylesheet" href="style.css">
 </head>
 
+
 <body>
 
+  <!-- ========================================================
+       HEADER
+       ======================================================== -->
+
   <header>
+
     <div class="welcome-section">
+
       <div class="welcome-title">
-        <img src="handix-logo.png" alt="HANDIX" style="height: auto; width: 200px;">
+
+        <img
+          src="handix-logo.png"
+          alt="HANDIX"
+          style="height: auto; width: 200px;"
+        >
+
       </div>
-      <div class="welcome-text">Statistiques des matchs FFHandball</div>
+
+      <div class="welcome-text">
+        Statistiques des matchs FFHandball
+      </div>
+
     </div>
+
   </header>
 
+
+  <!-- ========================================================
+       CONTENU PRINCIPAL
+       ======================================================== -->
+
   <main>
+
     <section class="page">
+
       <!-- Barre de recherche -->
+
       <div class="search-container">
-        <input 
-          id="matchUrl" 
-          type="url" 
-          class="search-input" 
-          placeholder="Collez l'URL du match FFHandball..." 
-        />
-        <button id="analyser" class="search-button" title="Analyser le match">
+
+        <input
+          id="matchUrl"
+          type="url"
+          class="search-input"
+          placeholder="Collez l'URL du match FFHandball..."
+          autocomplete="off"
+        >
+
+        <button
+          id="analyser"
+          class="search-button"
+          title="Analyser le match"
+          type="button"
+        >
+
           <i class="ri-search-line"></i>
+
         </button>
+
       </div>
 
-      <!-- Zone d'état / messages d'erreur ou d'attente -->
+
+      <!-- Zone d'état -->
+
       <div id="status"></div>
 
-      <!-- Conteneur des résultats -->
-      <div id="resultats" class="data-container"></div>
+
+      <!-- Résultats -->
+
+      <div
+        id="resultats"
+        class="data-container"
+      ></div>
+
 
       <!-- Zone de débogage -->
-      <pre id="debug" class="debug error-message" style="display: none; text-align: left; overflow-x: auto;"></pre>
+
+      <pre
+        id="debug"
+        class="debug error-message"
+        style="
+          display: none;
+          text-align: left;
+          overflow-x: auto;
+        "
+      ></pre>
+
     </section>
+
   </main>
 
-  <!-- Navigation bottom -->
+
+  <!-- ========================================================
+       NAVIGATION BOTTOM
+       ======================================================== -->
+
   <nav class="bottom-nav">
-    <div class="nav-item" onclick="window.location.href='salles.html'">
-      <div class="nav-icon"><i class="ri-map-pin-line"></i></div>
-      <div class="nav-label">Salles</div>
+
+    <div
+      class="nav-item"
+      onclick="window.location.href='salles.html'"
+    >
+
+      <div class="nav-icon">
+        <i class="ri-map-pin-line"></i>
+      </div>
+
+      <div class="nav-label">
+        Salles
+      </div>
+
     </div>
-    <div class="nav-item" onclick="window.location.href='clubs.html'">
-      <div class="nav-icon"><i class="ri-team-line"></i></div>
-      <div class="nav-label">Clubs</div>
+
+
+    <div
+      class="nav-item"
+      onclick="window.location.href='clubs.html'"
+    >
+
+      <div class="nav-icon">
+        <i class="ri-team-line"></i>
+      </div>
+
+      <div class="nav-label">
+        Clubs
+      </div>
+
     </div>
-    <div class="nav-item active" onclick="window.location.href='index.html'">
-      <div class="nav-icon"><i class="ri-bar-chart-box-line"></i></div>
-      <div class="nav-label">Stats</div>
+
+
+    <div
+      class="nav-item active"
+      onclick="window.location.href='index.html'"
+    >
+
+      <div class="nav-icon">
+        <i class="ri-bar-chart-box-line"></i>
+      </div>
+
+      <div class="nav-label">
+        Stats
+      </div>
+
     </div>
-    <div class="nav-item" onclick="window.location.href='matchs.html'">
-      <div class="nav-icon"><i class="ri-trophy-line"></i></div>
-      <div class="nav-label">Matchs</div>
+
+
+    <div
+      class="nav-item"
+      onclick="window.location.href='matchs.html'"
+    >
+
+      <div class="nav-icon">
+        <i class="ri-trophy-line"></i>
+      </div>
+
+      <div class="nav-label">
+        Matchs
+      </div>
+
     </div>
+
   </nav>
 
+
+  <!-- ========================================================
+       JAVASCRIPT
+       ======================================================== -->
+
   <script src="script.js"></script>
+
 </body>
 
 </html>
