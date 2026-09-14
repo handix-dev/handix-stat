@@ -213,14 +213,30 @@ async function chargerMatch(url) {
   }
 }
 
+// CORRECTION: Assure que les scores sont manipulés comme des nombres (Number / parseInt)
 function ObtenirScoresMatch(m) {
+  if (!m) return { s1: 0, s2: 0 };
+
   const id1 = m.equipe1?.id;
   const id2 = m.equipe2?.id;
 
-  const s1 = m.score?.home?.score ?? (id1 ? m.statsJoueurs?.filter(j => String(j.equipeId) === String(id1)).reduce((t, j) => t + (parseInt(j.buts) || 0), 0) : 0);
-  const s2 = m.score?.away?.score ?? (id2 ? m.statsJoueurs?.filter(j => String(j.equipeId) === String(id2)).reduce((t, j) => t + (parseInt(j.buts) || 0), 0) : 0);
+  let s1 = m.score?.home?.score;
+  let s2 = m.score?.away?.score;
 
-  return { s1: s1 || 0, s2: s2 || 0 };
+  if (s1 === undefined || s1 === null) {
+    s1 = id1 ? m.statsJoueurs?.filter(j => String(j.equipeId) === String(id1))
+      .reduce((t, j) => t + Number(j.buts || 0), 0) : 0;
+  }
+
+  if (s2 === undefined || s2 === null) {
+    s2 = id2 ? m.statsJoueurs?.filter(j => String(j.equipeId) === String(id2))
+      .reduce((t, j) => t + Number(j.buts || 0), 0) : 0;
+  }
+
+  return { 
+    s1: Math.max(0, parseInt(s1, 10) || 0), 
+    s2: Math.max(0, parseInt(s2, 10) || 0) 
+  };
 }
 
 async function explorerPoule() {
@@ -261,7 +277,7 @@ async function explorerPoule() {
   const baseId = parseInt(urlParts[2], 10);
   const endUrl = urlParts[3] || "";
 
-  // Scan avant (arrêt si 5 matchs consécutifs à 0-0 ou 2 erreurs 404)
+  // Scan avant
   let erreursConsecutives = 0;
   let zeroZeroConsecutifs = 0;
   let currentId = baseId + 1;
@@ -287,7 +303,7 @@ async function explorerPoule() {
     currentId++;
   }
 
-  // Scan arrière (arrêt si 5 matchs consécutifs à 0-0 ou 2 erreurs 404)
+  // Scan arrière
   erreursConsecutives = 0;
   zeroZeroConsecutifs = 0;
   currentId = baseId - 1;
@@ -317,7 +333,113 @@ async function explorerPoule() {
   afficherStatus(`${listeMatchsPoule.length} match(s) trouvé(s) !`, "success");
   pouleActions.style.display = "flex";
 
+  // On affiche le classement en premier, puis la liste des matchs
+  afficherClassement();
   afficherListeParJournee();
+}
+
+/*
+ * ============================================================
+ * CALCUL ET AFFICHAGE DU CLASSEMENT
+ * ============================================================
+ */
+function genererClassement() {
+  const classement = {};
+
+  listeMatchsPoule.forEach(match => {
+    const id1 = match.equipe1?.id;
+    const id2 = match.equipe2?.id;
+    if (!id1 || !id2) return;
+
+    if (!classement[id1]) classement[id1] = { nom: match.equipe1.libelle, pts: 0, joue: 0, v: 0, n: 0, d: 0, bp: 0, bc: 0, diff: 0 };
+    if (!classement[id2]) classement[id2] = { nom: match.equipe2.libelle, pts: 0, joue: 0, v: 0, n: 0, d: 0, bp: 0, bc: 0, diff: 0 };
+
+    const { s1, s2 } = ObtenirScoresMatch(match);
+
+    // Ignorer les matchs non joués (souvent à 0-0 sans stats)
+    if (s1 === 0 && s2 === 0 && (!match.statsJoueurs || match.statsJoueurs.length === 0)) return;
+
+    classement[id1].joue++;
+    classement[id2].joue++;
+    
+    classement[id1].bp += s1;
+    classement[id1].bc += s2;
+    classement[id2].bp += s2;
+    classement[id2].bc += s1;
+
+    // Barème standard Handball : Victoire = 3pts, Nul = 2pts, Défaite = 1pt
+    if (s1 > s2) {
+      classement[id1].v++; classement[id1].pts += 3;
+      classement[id2].d++; classement[id2].pts += 1;
+    } else if (s1 < s2) {
+      classement[id2].v++; classement[id2].pts += 3;
+      classement[id1].d++; classement[id1].pts += 1;
+    } else {
+      classement[id1].n++; classement[id1].pts += 2;
+      classement[id2].n++; classement[id2].pts += 2;
+    }
+  });
+
+  // Calcul propre de la différence de buts
+  Object.values(classement).forEach(eq => {
+    eq.diff = eq.bp - eq.bc;
+  });
+
+  // Tri : Points (desc), Différence de buts (desc), Buts marqués (desc)
+  return Object.values(classement).sort((a, b) => {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    if (b.diff !== a.diff) return b.diff - a.diff;
+    return b.bp - a.bp;
+  });
+}
+
+function afficherClassement() {
+  const donneesClassement = genererClassement();
+  
+  if (donneesClassement.length === 0) return;
+
+  const tableHTML = donneesClassement.map((eq, index) => `
+    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+      <td style="padding: 8px 4px; text-align: center; font-weight: 700; color: var(--text-muted);">${index + 1}</td>
+      <td style="padding: 8px 4px; font-weight: 600; font-size: 13px; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${eq.nom}</td>
+      <td style="padding: 8px 4px; text-align: center; font-weight: 800; color: var(--primary);">${eq.pts}</td>
+      <td style="padding: 8px 4px; text-align: center;">${eq.joue}</td>
+      <td style="padding: 8px 4px; text-align: center; color: #10b981;">${eq.v}</td>
+      <td style="padding: 8px 4px; text-align: center; color: #f59e0b;">${eq.n}</td>
+      <td style="padding: 8px 4px; text-align: center; color: #ef4444;">${eq.d}</td>
+      <td style="padding: 8px 4px; text-align: center; font-weight: 700;">${eq.diff > 0 ? '+' + eq.diff : eq.diff}</td>
+    </tr>
+  `).join("");
+
+  const classementDiv = document.createElement("div");
+  classementDiv.className = "card";
+  classementDiv.style.marginBottom = "20px";
+  classementDiv.innerHTML = `
+    <div class="section-header" style="padding: 12px 16px 0;">
+      <div class="section-title">Classement de la poule</div>
+    </div>
+    <div style="overflow-x: auto; padding: 0 16px 16px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+        <thead>
+          <tr style="border-bottom: 2px solid rgba(0,0,0,0.1); color: var(--text-muted); text-transform: uppercase; font-size: 10px;">
+            <th style="padding: 8px 4px; text-align: center;">#</th>
+            <th style="padding: 8px 4px; text-align: left;">Équipe</th>
+            <th style="padding: 8px 4px; text-align: center;">Pts</th>
+            <th style="padding: 8px 4px; text-align: center;">J</th>
+            <th style="padding: 8px 4px; text-align: center;">V</th>
+            <th style="padding: 8px 4px; text-align: center;">N</th>
+            <th style="padding: 8px 4px; text-align: center;">D</th>
+            <th style="padding: 8px 4px; text-align: center;">Diff</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableHTML}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  vueListe.appendChild(classementDiv);
 }
 
 /*
@@ -326,8 +448,6 @@ async function explorerPoule() {
  * ============================================================
  */
 function afficherListeParJournee() {
-  vueListe.innerHTML = "";
-
   const journeesMap = new Map();
 
   listeMatchsPoule.forEach(match => {
