@@ -326,3 +326,85 @@ header {
   font-size: 14px;
   font-weight: 600;
 }
+
+
+/* --- GESTION DES FAVORIS POULE --- */
+.poule-actions {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0 16px 0;
+}
+
+.btn-favori {
+  background-color: transparent;
+  color: var(--primary);
+  border: 1,5px solid var(--primary);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-favori:hover {
+  background-color: var(--primary);
+  color: #fff;
+}
+
+.favoris-poule-container {
+  margin: 12px 0;
+}
+
+.favoris-poule-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.favoris-poule-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.poule-chip {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  padding: 6px 10px 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.poule-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+}
+
+.poule-chip-delete {
+  color: var(--text-muted);
+  border-radius: 50%;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.poule-chip-delete:hover {
+  color: #e63946;
+  background-color: rgba(230, 57, 70, 0.1);
+}
