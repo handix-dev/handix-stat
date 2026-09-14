@@ -337,8 +337,8 @@ header {
 
 .btn-favori {
   background-color: transparent;
-  color: var(--primary);
-  border: 1,5px solid var(--primary);
+  color: var(--text-primary);
+  border: 1,5px solid var(--text-primary);
   border-radius: 20px;
   padding: 6px 14px;
   font-size: 13px;
