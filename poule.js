@@ -271,7 +271,7 @@ function afficherListeParJournee() {
       if (match.rematch?.rencontre?.date) {
         const d = new Date(match.rematch.rencontre.date.replace(" ", "T"));
         if (!isNaN(d.getTime())) {
-          dateString = d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + " - " + d.toLocaleTimeString("fr-FR", { hour: "2digit", minute: "2digit" });
+          dateString = d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + " - " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
         }
       }
 
@@ -381,7 +381,7 @@ function afficherDetailMatch(index) {
     if (rencontreInfo.date) {
       const d = new Date(rencontreInfo.date.replace(" ", "T"));
       if (!isNaN(d.getTime())) {
-        dateFormatted = d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) + " à " + d.toLocaleTimeString("fr-FR", { hour: "2digit", minute: "2digit" });
+        dateFormatted = d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) + " à " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
       }
     }
   }
