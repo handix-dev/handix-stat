@@ -58,7 +58,9 @@
 
       <!-- Toggles / Onglets de classement -->
       <div id="classementToggles" style="display: none; margin: 16px 0 12px 0;">
-        <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 12px;">
+        
+        <!-- Toggle principal : Équipes vs Buteurs -->
+        <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 8px;">
           <button id="btnTabEquipes" class="btn-favori active" style="border-radius: 8px;" type="button">
             <i class="ri-trophy-line"></i> Classement Équipes
           </button>
@@ -67,15 +69,16 @@
           </button>
         </div>
 
-        <!-- Sous-toggle pour les buteurs (Caché par défaut) -->
-        <div id="subToggleButeurs" style="display: none; justify-content: center; gap: 6px;">
-          <button id="btnSortButs" class="search-button" style="width: auto; padding: 4px 10px; font-size: 11px;" type="button">
-            Total Buts
+        <!-- Sous-toggle : Total Buts vs Moyenne/Match -->
+        <div id="subToggleButeurs" style="display: none; gap: 8px; justify-content: center;">
+          <button id="btnSortButs" class="btn-favori active" style="border-radius: 8px;" type="button">
+            <i class="ri-football-line"></i> Total Buts
           </button>
-          <button id="btnSortRatio" class="search-button" style="width: auto; padding: 4px 10px; font-size: 11px; background: var(--text-muted);" type="button">
-            Moyenne / Match
+          <button id="btnSortRatio" class="btn-favori" style="border-radius: 8px;" type="button">
+            <i class="ri-calculator-line"></i> Moyenne / Match
           </button>
         </div>
+
       </div>
 
       <!-- Vue Classement Équipes -->
