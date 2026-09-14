@@ -148,14 +148,31 @@ async function chargerMatch(url) {
   }
 }
 
+// CORRECTION MAJEURE : Conversion forcée en entier numérique pur
 function ObtenirScoresMatch(m) {
+  if (!m) return { s1: 0, s2: 0 };
+
   const id1 = m.equipe1?.id;
   const id2 = m.equipe2?.id;
 
-  const s1 = m.score?.home?.score ?? (id1 ? m.statsJoueurs?.filter(j => String(j.equipeId) === String(id1)).reduce((t, j) => t + (parseInt(j.buts) || 0), 0) : 0);
-  const s2 = m.score?.away?.score ?? (id2 ? m.statsJoueurs?.filter(j => String(j.equipeId) === String(id2)).reduce((t, j) => t + (parseInt(j.buts) || 0), 0) : 0);
+  let score1Raw = m.score?.home?.score;
+  let score2Raw = m.score?.away?.score;
 
-  return { s1: s1 || 0, s2: s2 || 0 };
+  if (score1Raw === undefined || score1Raw === null) {
+    score1Raw = id1 ? m.statsJoueurs?.filter(j => String(j.equipeId) === String(id1)).reduce((t, j) => t + (parseInt(j.buts, 10) || 0), 0) : 0;
+  }
+
+  if (score2Raw === undefined || score2Raw === null) {
+    score2Raw = id2 ? m.statsJoueurs?.filter(j => String(j.equipeId) === String(id2)).reduce((t, j) => t + (parseInt(j.buts, 10) || 0), 0) : 0;
+  }
+
+  const s1 = parseInt(score1Raw, 10);
+  const s2 = parseInt(score2Raw, 10);
+
+  return {
+    s1: isNaN(s1) ? 0 : Math.max(0, s1),
+    s2: isNaN(s2) ? 0 : Math.max(0, s2)
+  };
 }
 
 async function explorerPoule() {
@@ -260,6 +277,7 @@ function genererClassementEquipes() {
     const id1 = m.equipe1.id, name1 = m.equipe1.libelle;
     const id2 = m.equipe2.id, name2 = m.equipe2.libelle;
 
+    // Initialisation STRICTE avec des nombres entiers (0)
     if (!equipes[id1]) equipes[id1] = { name: name1, pts: 0, j: 0, g: 0, n: 0, p: 0, bp: 0, bc: 0, forme: [] };
     if (!equipes[id2]) equipes[id2] = { name: name2, pts: 0, j: 0, g: 0, n: 0, p: 0, bp: 0, bc: 0, forme: [] };
 
@@ -267,19 +285,24 @@ function genererClassementEquipes() {
 
     // Exclusion des matchs non joués (0-0)
     if (s1 > 0 || s2 > 0) {
-      equipes[id1].j++; equipes[id2].j++;
-      equipes[id1].bp += s1; equipes[id1].bc += s2;
-      equipes[id2].bp += s2; equipes[id2].bc += s1;
+      equipes[id1].j += 1;
+      equipes[id2].j += 1;
+
+      // Addition arithmétique garantie
+      equipes[id1].bp = parseInt(equipes[id1].bp, 10) + s1;
+      equipes[id1].bc = parseInt(equipes[id1].bc, 10) + s2;
+      equipes[id2].bp = parseInt(equipes[id2].bp, 10) + s2;
+      equipes[id2].bc = parseInt(equipes[id2].bc, 10) + s1;
 
       if (s1 > s2) {
-        equipes[id1].pts += 3; equipes[id1].g++; equipes[id1].forme.push("V");
-        equipes[id2].pts += 1; equipes[id2].p++; equipes[id2].forme.push("D");
+        equipes[id1].pts += 3; equipes[id1].g += 1; equipes[id1].forme.push("V");
+        equipes[id2].pts += 1; equipes[id2].p += 1; equipes[id2].forme.push("D");
       } else if (s1 < s2) {
-        equipes[id2].pts += 3; equipes[id2].g++; equipes[id2].forme.push("V");
-        equipes[id1].pts += 1; equipes[id1].p++; equipes[id1].forme.push("D");
+        equipes[id2].pts += 3; equipes[id2].g += 1; equipes[id2].forme.push("V");
+        equipes[id1].pts += 1; equipes[id1].p += 1; equipes[id1].forme.push("D");
       } else {
-        equipes[id1].pts += 2; equipes[id1].n++; equipes[id1].forme.push("N");
-        equipes[id2].pts += 2; equipes[id2].n++; equipes[id2].forme.push("N");
+        equipes[id1].pts += 2; equipes[id1].n += 1; equipes[id1].forme.push("N");
+        equipes[id2].pts += 2; equipes[id2].n += 1; equipes[id2].forme.push("N");
       }
     }
   });
@@ -358,7 +381,7 @@ function genererClassementButeurs() {
 
     m.statsJoueurs.forEach(j => {
       const key = `${j.prenom}_${j.nom}_${j.equipeId}`.toLowerCase();
-      const buts = parseInt(j.buts) || 0;
+      const buts = parseInt(j.buts, 10) || 0;
 
       if (!joueurs[key]) {
         joueurs[key] = {
