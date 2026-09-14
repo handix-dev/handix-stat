@@ -1,6 +1,6 @@
 /*
  * ============================================================
- * CONFIGURATION & ELEMENTS
+ * CONFIGURATION & ÉLÉMENTS
  * ============================================================
  */
 const WORKER_URL = "https://silent-salad-f4a2.handix-officiel.workers.dev/";
@@ -58,7 +58,6 @@ function extraireDonnees(html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
 
-  // Composant Joueurs
   const joueursComponent = doc.querySelector(
     'smartfire-component[name="competitions---rencontre-liste-joueurs"]'
   );
@@ -81,7 +80,6 @@ function extraireDonnees(html) {
     throw new Error("Impossible d'analyser le format JSON des joueurs.");
   }
 
-  // Composant Score / Logos
   const scoreComponent = doc.querySelector(
     'smartfire-component[name="competitions---competition-score"]'
   );
@@ -100,7 +98,6 @@ function extraireDonnees(html) {
     }
   }
 
-  // Composant Rematch (Date, Heure, Journée)
   const rematchComponent = doc.querySelector(
     'smartfire-component[name="competitions---rematch"]'
   );
@@ -181,7 +178,7 @@ function afficherEquipe(equipe, joueurs, logo = null) {
           </div>
         </div>
         <div class="card-badge" style="flex-shrink: 0;">
-          ${totalButs} but(s)
+          Total: ${totalButs} but(s)
         </div>
       </div>
 
@@ -215,7 +212,6 @@ function afficherMatch(data) {
     .filter(j => String(j.equipeId) === String(data.equipe2.id))
     .reduce((t, j) => t + (parseInt(j.buts) || 0), 0);
 
-  // Traitement Date & Heure
   let dateFormatted = "";
   let journeeTexte = "";
 
@@ -254,7 +250,6 @@ function afficherMatch(data) {
       ` : ""}
       
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-        <!-- Équipe 1 -->
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;">
           ${logoHTML1}
           <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); line-height: 1.2; text-align: center; width: 100%; word-break: break-word;">
@@ -262,7 +257,6 @@ function afficherMatch(data) {
           </div>
         </div>
 
-        <!-- Score Central -->
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; padding: 0 4px;">
           <div style="font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: 0.5px; white-space: nowrap;">
             ${scoreEquipe1} : ${scoreEquipe2}
@@ -272,7 +266,6 @@ function afficherMatch(data) {
           </span>
         </div>
 
-        <!-- Équipe 2 -->
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;">
           ${logoHTML2}
           <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); line-height: 1.2; text-align: center; width: 100%; word-break: break-word;">
