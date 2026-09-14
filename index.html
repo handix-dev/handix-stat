@@ -2,934 +2,346 @@
 <html lang="fr">
 
 <head>
-
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Handix Stat</title>
 
-  <style>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
 
-    * {
-      box-sizing: border-box;
-    }
+  <!-- Font Awesome pour les icônes -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f4f5f7;
-      color: #222;
-    }
-
-    header {
-      background: #111827;
-      color: white;
-      padding: 25px 20px;
-      text-align: center;
-    }
-
-    header h1 {
-      margin: 0 0 8px;
-      font-size: 28px;
-    }
-
-    header p {
-      margin: 0;
-      color: #cbd5e1;
-    }
-
-    main {
-      max-width: 1100px;
-      margin: 30px auto;
-      padding: 0 15px;
-    }
-
-    .box {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-    }
-
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
-
-    input {
-      width: 100%;
-      padding: 13px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 15px;
-      margin-bottom: 12px;
-    }
-
-    button {
-      width: 100%;
-      padding: 13px;
-      border: 0;
-      border-radius: 8px;
-      background: #111827;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #1f2937;
-    }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: wait;
-    }
-
-    #status {
-      margin-top: 15px;
-      padding: 12px;
-      border-radius: 8px;
-      display: none;
-      white-space: pre-wrap;
-    }
-
-    .status-loading {
-      display: block !important;
-      background: #e5e7eb;
-      color: #374151;
-    }
-
-    .status-error {
-      display: block !important;
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .status-success {
-      display: block !important;
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .teams {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-
-    .team {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-    }
-
-    .team-header {
-      padding: 18px;
-      background: #111827;
-      color: white;
-    }
-
-    .team-header h2 {
-      margin: 0;
-      font-size: 20px;
-    }
-
-    .team-header p {
-      margin: 5px 0 0;
-      color: #cbd5e1;
-      font-size: 14px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th,
-    td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #eee;
-      text-align: left;
-    }
-
-    th {
-      background: #f9fafb;
-      font-size: 13px;
-      color: #555;
-    }
-
-    td.numero {
-      width: 50px;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    td.buts {
-      width: 70px;
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    tr:last-child td {
-      border-bottom: none;
-    }
-
-    .total {
-      padding: 15px;
-      background: #f9fafb;
-      font-weight: bold;
-      text-align: right;
-    }
-
-    .debug {
-      margin-top: 20px;
-      background: #111827;
-      color: #d1d5db;
-      padding: 15px;
-      border-radius: 8px;
-      overflow-x: auto;
-      font-size: 12px;
-      display: none;
-      white-space: pre-wrap;
-    }
-
-    @media (max-width: 700px) {
-
-      .teams {
-        grid-template-columns: 1fr;
-      }
-
-      header h1 {
-        font-size: 24px;
-      }
-
-    }
-
-  </style>
-
+  <!-- Feuille de style externe -->
+  <link rel="stylesheet" href="style.css">
 </head>
-
 
 <body>
 
   <header>
-
-    <h1>Handix Stat</h1>
-
-    <p>
-      Statistiques des joueurs FFHandball
-    </p>
-
+    <div class="header-content">
+      <div class="logo">Handix Stat</div>
+    </div>
+    <div class="welcome-section">
+      <p class="welcome-text">Statistiques des joueurs</p>
+      <h1 class="welcome-title">FFHandball</h1>
+    </div>
   </header>
 
-
   <main>
+    <div class="page">
+      <!-- Barre de recherche -->
+      <div class="search-container">
+        <input 
+          id="matchUrl" 
+          type="url" 
+          class="search-input" 
+          placeholder="Collez l'URL du match FFHandball" 
+        />
+        <button id="analyser" class="search-button" title="Analyser le match">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+      </div>
 
-    <div class="box">
-
-      <label for="matchUrl">
-        URL du match FFHandball
-      </label>
-
-      <input
-        id="matchUrl"
-        type="url"
-        placeholder="Collez ici l'URL du match FFHandball"
-      >
-
-      <button id="analyser">
-        Analyser le match
-      </button>
-
+      <!-- Zone d'état / messages d'erreur ou d'attente -->
       <div id="status"></div>
 
+      <!-- Conteneur des résultats -->
+      <div id="resultats" class="data-container"></div>
+
+      <!-- Zone de débogage -->
+      <pre id="debug" class="debug error-message" style="display: none; text-align: left; overflow-x: auto;"></pre>
     </div>
-
-
-    <div id="resultats"></div>
-
-
-    <pre id="debug" class="debug"></pre>
-
   </main>
 
-
   <script>
-
     /*
      * ============================================================
      * CONFIGURATION
      * ============================================================
      */
-
-    const WORKER_URL =
-      "https://silent-salad-f4a2.handix-officiel.workers.dev/";
-
+    const WORKER_URL = "https://silent-salad-f4a2.handix-officiel.workers.dev/";
 
     /*
      * ============================================================
      * ELEMENTS
      * ============================================================
      */
-
-    const input =
-      document.getElementById("matchUrl");
-
-    const button =
-      document.getElementById("analyser");
-
-    const status =
-      document.getElementById("status");
-
-    const resultats =
-      document.getElementById("resultats");
-
-    const debug =
-      document.getElementById("debug");
-
+    const input = document.getElementById("matchUrl");
+    const button = document.getElementById("analyser");
+    const status = document.getElementById("status");
+    const resultats = document.getElementById("resultats");
+    const debug = document.getElementById("debug");
 
     /*
      * ============================================================
      * STATUS
      * ============================================================
      */
-
     function afficherStatus(message, type = "") {
-
-      status.textContent = message;
-
       status.className = "";
+      status.innerHTML = "";
 
-      if (type) {
+      if (!type) return;
 
-        status.classList.add(
-          "status-" + type
-        );
-
+      if (type === "loading") {
+        status.innerHTML = `
+          <div class="loading">
+            <div class="spinner"></div>
+            <p>${message}</p>
+          </div>
+        `;
+      } else if (type === "error") {
+        status.innerHTML = `
+          <div class="error-message">
+            <i class="fa-solid fa-circle-exclamation" style="font-size: 24px; margin-bottom: 8px;"></i>
+            <p>${message}</p>
+          </div>
+        `;
+      } else if (type === "success") {
+        status.innerHTML = `
+          <div class="notification-item notification-unread" style="border-left-color: var(--success);">
+            <div class="notification-header">
+              <span class="notification-title"><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Succès</span>
+            </div>
+            <div class="notification-content">${message}</div>
+          </div>
+        `;
       }
-
     }
-
 
     /*
      * ============================================================
      * VERIFICATION URL
      * ============================================================
      */
-
     function verifierUrl(url) {
-
       try {
-
-        const parsed =
-          new URL(url);
-
+        const parsed = new URL(url);
         return (
           parsed.hostname === "www.ffhandball.fr" ||
           parsed.hostname === "ffhandball.fr"
         );
-
       } catch {
-
         return false;
-
       }
-
     }
-
 
     /*
      * ============================================================
      * EXTRACTION DES DONNEES
      * ============================================================
      */
-
     function extraireDonnees(html) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
 
-      const parser =
-        new DOMParser();
-
-      const doc =
-        parser.parseFromString(
-          html,
-          "text/html"
-        );
-
-
-      /*
-       * Recherche du composant joueurs.
-       */
-
-      const component =
-        doc.querySelector(
-          'smartfire-component[name="competitions---rencontre-liste-joueurs"]'
-        );
-
+      const component = doc.querySelector(
+        'smartfire-component[name="competitions---rencontre-liste-joueurs"]'
+      );
 
       if (!component) {
-
-        throw new Error(
-          "Le composant des statistiques joueurs est introuvable."
-        );
-
+        throw new Error("Le composant des statistiques joueurs est introuvable.");
       }
 
-
-      /*
-       * Récupération de l'attribut JSON.
-       */
-
-      let attributes =
-        component.getAttribute(
-          "attributes"
-        );
-
+      let attributes = component.getAttribute("attributes");
 
       if (!attributes) {
-
-        throw new Error(
-          "L'attribut attributes est vide."
-        );
-
+        throw new Error("L'attribut attributes est vide.");
       }
 
-
-      /*
-       * Décodage des entités HTML.
-       */
-
-      const textarea =
-        document.createElement(
-          "textarea"
-        );
-
-      textarea.innerHTML =
-        attributes;
-
-      attributes =
-        textarea.value;
-
-
-      /*
-       * Conversion JSON.
-       */
+      const textarea = document.createElement("textarea");
+      textarea.innerHTML = attributes;
+      attributes = textarea.value;
 
       let data;
-
       try {
-
-        data =
-          JSON.parse(attributes);
-
+        data = JSON.parse(attributes);
       } catch (error) {
-
-        console.error(
-          "JSON reçu :",
-          attributes
-        );
-
-        throw new Error(
-          "Impossible de convertir les données joueurs en JSON."
-        );
-
+        console.error("JSON reçu :", attributes);
+        throw new Error("Impossible de convertir les données joueurs en JSON.");
       }
 
-
       return data;
-
     }
-
 
     /*
      * ============================================================
      * AFFICHAGE D'UNE EQUIPE
      * ============================================================
      */
-
-    function afficherEquipe(
-      equipe,
-      joueurs
-    ) {
-
-      const joueursEquipe =
-        joueurs.filter(
-          joueur =>
-            String(joueur.equipeId) ===
-            String(equipe.id)
-        );
-
-
-      /*
-       * Tri par numéro.
-       */
-
-      joueursEquipe.sort(
-        (a, b) => {
-
-          const numeroA =
-            parseInt(a.numero) || 999;
-
-          const numeroB =
-            parseInt(b.numero) || 999;
-
-          return numeroA - numeroB;
-
-        }
+    function afficherEquipe(equipe, joueurs) {
+      const joueursEquipe = joueurs.filter(
+        joueur => String(joueur.equipeId) === String(equipe.id)
       );
 
+      joueursEquipe.sort((a, b) => {
+        const numeroA = parseInt(a.numero) || 999;
+        const numeroB = parseInt(b.numero) || 999;
+        return numeroA - numeroB;
+      });
 
-      /*
-       * Total des buts.
-       */
+      const totalButs = joueursEquipe.reduce((total, joueur) => {
+        return total + (parseInt(joueur.buts) || 0);
+      }, 0);
 
-      const totalButs =
-        joueursEquipe.reduce(
-          (total, joueur) => {
+      let cartesJoueurs = "";
 
-            return total +
-              (parseInt(joueur.buts) || 0);
+      for (const joueur of joueursEquipe) {
+        const numero = joueur.numero || "-";
+        const prenom = joueur.prenom || "";
+        const nom = joueur.nom || "";
+        const buts = parseInt(joueur.buts) || 0;
 
-          },
-          0
-        );
-
-
-      /*
-       * Lignes du tableau.
-       */
-
-      let lignes = "";
-
-
-      for (
-        const joueur
-        of joueursEquipe
-      ) {
-
-        const numero =
-          joueur.numero || "-";
-
-        const prenom =
-          joueur.prenom || "";
-
-        const nom =
-          joueur.nom || "";
-
-        const buts =
-          parseInt(joueur.buts) || 0;
-
-
-        lignes += `
-
-          <tr>
-
-            <td class="numero">
-              ${numero}
-            </td>
-
-            <td>
-              ${prenom} ${nom}
-            </td>
-
-            <td class="buts">
-              ${buts}
-            </td>
-
-          </tr>
-
+        cartesJoueurs += `
+          <div class="favorite-item">
+            <div class="favorite-item-content">
+              <div class="favorite-item-icon">
+                ${numero}
+              </div>
+              <div class="favorite-item-name">
+                ${prenom} ${nom}
+              </div>
+            </div>
+            <div class="score-container winner-score">
+              <span class="match-score">${buts}</span>
+            </div>
+          </div>
         `;
-
       }
 
-
-      if (
-        joueursEquipe.length === 0
-      ) {
-
-        lignes = `
-
-          <tr>
-
-            <td colspan="3">
-              Aucun joueur trouvé.
-            </td>
-
-          </tr>
-
+      if (joueursEquipe.length === 0) {
+        cartesJoueurs = `
+          <div class="no-results" style="padding: 20px;">
+            <p>Aucun joueur trouvé pour cette équipe.</p>
+          </div>
         `;
-
       }
-
 
       return `
-
-        <div class="team">
-
-          <div class="team-header">
-
-            <h2>
-              ${equipe.libelle || "Équipe"}
-            </h2>
-
-            <p>
-              ${joueursEquipe.length}
-              joueur(s)
-            </p>
-
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fa-solid fa-shirt"></i>
+            </div>
+            <div class="card-title">
+              <span style="font-size: 16px; font-weight: 800;">${equipe.libelle || "Équipe"}</span>
+              <br>
+              <span style="font-size: 12px; font-weight: 400; color: var(--text-muted);">
+                ${joueursEquipe.length} joueur(s)
+              </span>
+            </div>
+            <div class="card-badge">
+              Total: ${totalButs} goal(s)
+            </div>
           </div>
-
-
-          <table>
-
-            <thead>
-
-              <tr>
-
-                <th>
-                  N°
-                </th>
-
-                <th>
-                  Joueur
-                </th>
-
-                <th>
-                  Buts
-                </th>
-
-              </tr>
-
-            </thead>
-
-
-            <tbody>
-
-              ${lignes}
-
-            </tbody>
-
-          </table>
-
-
-          <div class="total">
-
-            Total :
-            ${totalButs}
-            but(s)
-
+          
+          <div class="card-details">
+            <div class="favorites-list">
+              ${cartesJoueurs}
+            </div>
           </div>
-
         </div>
-
       `;
-
     }
-
 
     /*
      * ============================================================
      * AFFICHAGE DU MATCH
      * ============================================================
      */
-
     function afficherMatch(data) {
-
       resultats.innerHTML = "";
 
-
-      if (!data) {
-
-        throw new Error(
-          "Aucune donnée reçue."
-        );
-
-      }
-
-
-      if (!data.statsJoueurs) {
-
-        throw new Error(
-          "statsJoueurs est absent des données."
-        );
-
-      }
-
-
-      if (!data.equipe1) {
-
-        throw new Error(
-          "equipe1 est absente."
-        );
-
-      }
-
-
-      if (!data.equipe2) {
-
-        throw new Error(
-          "equipe2 est absente."
-        );
-
-      }
-
+      if (!data) throw new Error("Aucune donnée reçue.");
+      if (!data.statsJoueurs) throw new Error("statsJoueurs est absent des données.");
+      if (!data.equipe1) throw new Error("equipe1 est absente.");
+      if (!data.equipe2) throw new Error("equipe2 est absente.");
 
       resultats.innerHTML = `
-
-        <div class="teams">
-
-          ${afficherEquipe(
-            data.equipe1,
-            data.statsJoueurs
-          )}
-
-          ${afficherEquipe(
-            data.equipe2,
-            data.statsJoueurs
-          )}
-
+        <div class="section-header">
+          <h2 class="section-title">Feuille de match</h2>
         </div>
-
+        ${afficherEquipe(data.equipe1, data.statsJoueurs)}
+        ${afficherEquipe(data.equipe2, data.statsJoueurs)}
       `;
-
     }
-
 
     /*
      * ============================================================
      * ANALYSE DU MATCH
      * ============================================================
      */
-
     async function analyserMatch() {
-
-      const matchUrl =
-        input.value.trim();
-
+      const matchUrl = input.value.trim();
 
       resultats.innerHTML = "";
-
       debug.style.display = "none";
-
       debug.textContent = "";
 
-
-      /*
-       * URL obligatoire.
-       */
-
       if (!matchUrl) {
-
-        afficherStatus(
-          "Collez d'abord l'URL d'un match FFHandball.",
-          "error"
-        );
-
+        afficherStatus("Collez d'abord l'URL d'un match FFHandball.", "error");
         return;
-
       }
-
-
-      /*
-       * Vérification FFHandball.
-       */
 
       if (!verifierUrl(matchUrl)) {
-
-        afficherStatus(
-          "L'URL doit être une URL FFHandball.",
-          "error"
-        );
-
+        afficherStatus("L'URL doit être une URL FFHandball valide.", "error");
         return;
-
       }
-
 
       button.disabled = true;
-
-
-      afficherStatus(
-        "Récupération du match...",
-        "loading"
-      );
-
+      afficherStatus("Récupération des données du match...", "loading");
 
       try {
+        const proxyUrl = WORKER_URL + "?url=" + encodeURIComponent(matchUrl);
 
-        /*
-         * URL envoyée au Worker.
-         */
-
-        const proxyUrl =
-          WORKER_URL +
-          "?url=" +
-          encodeURIComponent(
-            matchUrl
-          );
-
-
-        console.log(
-          "URL Worker :",
-          proxyUrl
-        );
-
-
-        /*
-         * Appel du Worker.
-         */
-
-        const response =
-          await fetch(
-            proxyUrl
-          );
-
+        const response = await fetch(proxyUrl);
 
         if (!response.ok) {
-
-          const erreur =
-            await response.text();
-
+          const erreur = await response.text();
           throw new Error(
-            "Worker HTTP " +
-            response.status +
-            " : " +
-            erreur.substring(
-              0,
-              300
-            )
+            "Worker HTTP " + response.status + " : " + erreur.substring(0, 300)
           );
-
         }
 
-
-        /*
-         * HTML FFHandball.
-         */
-
-        const html =
-          await response.text();
-
+        const html = await response.text();
 
         if (!html) {
-
-          throw new Error(
-            "Le Worker a renvoyé une réponse vide."
-          );
-
+          throw new Error("Le Worker a renvoyé une réponse vide.");
         }
 
+        const data = extraireDonnees(html);
 
-        console.log(
-          "HTML reçu :",
-          html.length,
-          "caractères"
-        );
-
-
-        /*
-         * Scraping côté navigateur.
-         */
-
-        const data =
-          extraireDonnees(
-            html
-          );
-
-
-        console.log(
-          "Données extraites :",
-          data
-        );
-
-
-        /*
-         * Affichage.
-         */
-
-        afficherMatch(
-          data
-        );
-
-
-        afficherStatus(
-          "Match analysé avec succès.",
-          "success"
-        );
-
+        afficherMatch(data);
+        afficherStatus("Match analysé avec succès !", "success");
 
       } catch (error) {
+        console.error(error);
 
-        console.error(
-          error
-        );
+        afficherStatus("Erreur : " + error.message, "error");
 
-
-        afficherStatus(
-          "Erreur : " +
-          error.message,
-          "error"
-        );
-
-
-        debug.style.display =
-          "block";
-
-        debug.textContent =
-          error.stack ||
-          error.message;
+        debug.style.display = "block";
+        debug.textContent = error.stack || error.message;
 
       } finally {
-
-        button.disabled =
-          false;
-
+        button.disabled = false;
       }
-
     }
 
-
     /*
      * ============================================================
-     * BOUTON
+     * ÉVÉNEMENTS
      * ============================================================
      */
+    button.addEventListener("click", analyserMatch);
 
-    button.addEventListener(
-      "click",
-      analyserMatch
-    );
-
-
-    /*
-     * ============================================================
-     * TOUCHE ENTREE
-     * ============================================================
-     */
-
-    input.addEventListener(
-      "keydown",
-      event => {
-
-        if (
-          event.key === "Enter"
-        ) {
-
-          analyserMatch();
-
-        }
-
+    input.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        analyserMatch();
       }
-    );
-
+    });
   </script>
 
 </body>
