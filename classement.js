@@ -148,6 +148,16 @@ async function chargerMatch(url) {
   }
 }
 
+function ObtenirScoresMatch(m) {
+  const id1 = m.equipe1?.id;
+  const id2 = m.equipe2?.id;
+
+  const s1 = m.score?.home?.score ?? (id1 ? m.statsJoueurs?.filter(j => String(j.equipeId) === String(id1)).reduce((t, j) => t + (parseInt(j.buts) || 0), 0) : 0);
+  const s2 = m.score?.away?.score ?? (id2 ? m.statsJoueurs?.filter(j => String(j.equipeId) === String(id2)).reduce((t, j) => t + (parseInt(j.buts) || 0), 0) : 0);
+
+  return { s1: s1 || 0, s2: s2 || 0 };
+}
+
 async function explorerPoule() {
   const targetUrl = input.value.trim();
   vueEquipes.style.display = "none";
@@ -179,19 +189,41 @@ async function explorerPoule() {
   const baseId = parseInt(urlParts[2], 10);
   const endUrl = urlParts[3] || "";
 
-  // Scan vers l'avant
-  let err = 0, currentId = baseId + 1;
-  while (err < 2) {
+  // Scan vers l'avant (avec vérification de 5 matchs non joués 0-0 consécutifs ou 2 erreurs 404)
+  let err = 0, zeroZeroConsecutifs = 0, currentId = baseId + 1;
+  while (err < 2 && zeroZeroConsecutifs < 5) {
     const data = await chargerMatch(`${baseUrl}${currentId}${endUrl}`);
-    if (data) { listeMatchsPoule.push(data); err = 0; } else { err++; }
+    if (data) {
+      listeMatchsPoule.push(data);
+      err = 0;
+      const { s1, s2 } = ObtenirScoresMatch(data);
+      if (s1 === 0 && s2 === 0) {
+        zeroZeroConsecutifs++;
+      } else {
+        zeroZeroConsecutifs = 0;
+      }
+    } else {
+      err++;
+    }
     currentId++;
   }
 
   // Scan vers l'arrière
-  err = 0; currentId = baseId - 1;
-  while (err < 2 && currentId > 0) {
+  err = 0; zeroZeroConsecutifs = 0; currentId = baseId - 1;
+  while (err < 2 && zeroZeroConsecutifs < 5 && currentId > 0) {
     const data = await chargerMatch(`${baseUrl}${currentId}${endUrl}`);
-    if (data) { listeMatchsPoule.unshift(data); err = 0; } else { err++; }
+    if (data) {
+      listeMatchsPoule.unshift(data);
+      err = 0;
+      const { s1, s2 } = ObtenirScoresMatch(data);
+      if (s1 === 0 && s2 === 0) {
+        zeroZeroConsecutifs++;
+      } else {
+        zeroZeroConsecutifs = 0;
+      }
+    } else {
+      err++;
+    }
     currentId--;
   }
 
@@ -216,7 +248,6 @@ function calculerEtAfficherTout() {
 function genererClassementEquipes() {
   const equipes = {};
 
-  // Trier les matchs chronologiquement si date disponible
   const matchsTries = [...listeMatchsPoule].sort((a, b) => {
     const dA = a.rematch?.rencontre?.date ? new Date(a.rematch.rencontre.date.replace(" ", "T")) : 0;
     const dB = b.rematch?.rencontre?.date ? new Date(b.rematch.rencontre.date.replace(" ", "T")) : 0;
@@ -232,10 +263,9 @@ function genererClassementEquipes() {
     if (!equipes[id1]) equipes[id1] = { name: name1, pts: 0, j: 0, g: 0, n: 0, p: 0, bp: 0, bc: 0, forme: [] };
     if (!equipes[id2]) equipes[id2] = { name: name2, pts: 0, j: 0, g: 0, n: 0, p: 0, bp: 0, bc: 0, forme: [] };
 
-    const s1 = m.score?.home?.score ?? m.statsJoueurs.filter(j => String(j.equipeId) === String(id1)).reduce((t, j) => t + (parseInt(j.buts) || 0), 0);
-    const s2 = m.score?.away?.score ?? m.statsJoueurs.filter(j => String(j.equipeId) === String(id2)).reduce((t, j) => t + (parseInt(j.buts) || 0), 0);
+    const { s1, s2 } = ObtenirScoresMatch(m);
 
-    // Ne prendre en compte que si le match a été joué (au moins un but marqué)
+    // Exclusion explicite des matchs 0-0 (non joués)
     if (s1 > 0 || s2 > 0) {
       equipes[id1].j++; equipes[id2].j++;
       equipes[id1].bp += s1; equipes[id1].bc += s2;
@@ -284,16 +314,16 @@ function genererClassementEquipes() {
   classement.forEach((eq, index) => {
     const diff = eq.bp - eq.bc;
     const formeHTML = eq.forme.slice(-5).map(f => {
-      let bg = "#e63946"; // Rouge (Défaite)
-      if (f === "V") bg = "#2a9d8f"; // Vert (Victoire)
-      if (f === "N") bg = "#f4a261"; // Orange (Nul)
+      let bg = "#e63946";
+      if (f === "V") bg = "#2a9d8f";
+      if (f === "N") bg = "#f4a261";
       return `<span style="display: inline-block; width: 14px; height: 14px; line-height: 14px; color: #fff; font-size: 9px; font-weight: 800; border-radius: 3px; background: ${bg}; margin: 0 1px;">${f}</span>`;
     }).join("");
 
     html += `
       <tr style="border-bottom: 1px solid rgba(0,0,0,0.05); height: 40px; font-weight: 500;">
         <td style="font-weight: 800; padding: 4px;">${index + 1}</td>
-        <td style="text-align: left; font-weight: 700; padding: 4px 8px; white-space: nowrap;">${eq.name}</td>
+        <td style="text-align: left; font-weight: 700; padding: 4px 8px; white-space: nowrap; color: var(--primary);">${eq.name}</td>
         <td style="font-weight: 800; color: var(--primary); padding: 4px;">${eq.pts}</td>
         <td style="padding: 4px;">${eq.j}</td>
         <td style="padding: 4px;">${eq.g}</td>
@@ -317,7 +347,10 @@ function genererClassementButeurs() {
   listeMatchsPoule.forEach(m => {
     if (!m.statsJoueurs) return;
 
-    // Cartographie rapide des équipes dans ce match
+    const { s1, s2 } = ObtenirScoresMatch(m);
+    // Ignorer également les matchs non joués (0-0) pour la comptabilisation des apparitions des joueurs
+    if (s1 === 0 && s2 === 0) return;
+
     const eqMap = {};
     if (m.equipe1) eqMap[String(m.equipe1.id)] = m.equipe1.libelle;
     if (m.equipe2) eqMap[String(m.equipe2.id)] = m.equipe2.libelle;
@@ -371,8 +404,8 @@ function genererClassementButeurs() {
     html += `
       <tr style="border-bottom: 1px solid rgba(0,0,0,0.05); height: 36px;">
         <td style="font-weight: 800; padding: 4px;">${index + 1}</td>
-        <td style="text-align: left; font-weight: 700; padding: 4px 8px; white-space: nowrap;">${j.nom}</td>
-        <td style="text-align: left; color: var(--text-muted); padding: 4px 8px; white-space: nowrap;">${j.equipe}</td>
+        <td style="text-align: left; font-weight: 700; padding: 4px 8px; white-space: nowrap; color: var(--primary);">${j.nom}</td>
+        <td style="text-align: left; font-weight: 600; padding: 4px 8px; white-space: nowrap; color: var(--primary);">${j.equipe}</td>
         <td style="font-weight: 800; color: var(--primary); padding: 4px;">${j.buts}</td>
         <td style="padding: 4px;">${j.matchs}</td>
         <td style="font-weight: 700; padding: 4px;">${j.ratio}</td>
@@ -394,18 +427,26 @@ function afficherOnglet(tab) {
     vueEquipes.style.display = "block";
     vueButeurs.style.display = "none";
     subToggleButeurs.style.display = "none";
-    btnTabEquipes.style.background = "var(--primary)";
-    btnTabEquipes.style.color = "#fff";
-    btnTabButeurs.style.background = "transparent";
-    btnTabButeurs.style.color = "var(--primary)";
+    
+    btnTabEquipes.classList.add("active");
+    btnTabButeurs.classList.remove("active");
   } else {
     vueEquipes.style.display = "none";
     vueButeurs.style.display = "block";
     subToggleButeurs.style.display = "flex";
-    btnTabButeurs.style.background = "var(--primary)";
-    btnTabButeurs.style.color = "#fff";
-    btnTabEquipes.style.background = "transparent";
-    btnTabEquipes.style.color = "var(--primary)";
+    
+    btnTabButeurs.classList.add("active");
+    btnTabEquipes.classList.remove("active");
+  }
+}
+
+function updateSubToggleUI() {
+  if (modeButeurs === "buts") {
+    btnSortButs.classList.add("active");
+    btnSortRatio.classList.remove("active");
+  } else {
+    btnSortRatio.classList.add("active");
+    btnSortButs.classList.remove("active");
   }
 }
 
@@ -414,15 +455,13 @@ btnTabButeurs.addEventListener("click", () => afficherOnglet("buteurs"));
 
 btnSortButs.addEventListener("click", () => {
   modeButeurs = "buts";
-  btnSortButs.style.background = "var(--primary)";
-  btnSortRatio.style.background = "var(--text-muted)";
+  updateSubToggleUI();
   genererClassementButeurs();
 });
 
 btnSortRatio.addEventListener("click", () => {
   modeButeurs = "ratio";
-  btnSortRatio.style.background = "var(--primary)";
-  btnSortButs.style.background = "var(--text-muted)";
+  updateSubToggleUI();
   genererClassementButeurs();
 });
 
