@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Stats Handball FFHandball</title>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f8;
+      color: #17202a;
+    }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+    }
+
+    header p {
+      margin: 0;
+      opacity: 0.8;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .search {
+      background: white;
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    .search label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    input {
+      flex: 1;
+      padding: 14px;
+      border: 1px solid #ccd2d8;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 14px 22px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: wait;
+    }
+
+    #message {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    .teams {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 25px;
+    }
+
+    .team {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    .team h2 {
+      margin-top: 0;
+      font-size: 20px;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      font-size: 13px;
+      color: #6b7280;
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #eee;
+    }
+
+    td:last-child,
+    th:last-child {
+      text-align: right;
+    }
+
+    .goals {
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .error {
+      color: #dc2626;
+    }
+
+    .loading {
+      color: #2563eb;
+    }
+
+    @media (max-width: 700px) {
+
+      .search-row {
+        flex-direction: column;
+      }
+
+      .teams {
+        grid-template-columns: 1fr;
+      }
+
+      header h1 {
+        font-size: 24px;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+
+<header>
+
+  <h1>🤾 Statistiques Handball</h1>
+
+  <p>
+    Consulte les statistiques des joueurs d'une rencontre FFHandball
+  </p>
+
+</header>
+
+
+<main>
+
+  <section class="search">
+
+    <label for="matchUrl">
+      URL de la rencontre FFHandball
+    </label>
+
+    <div class="search-row">
+
+      <input
+        id="matchUrl"
+        type="url"
+        placeholder="https://www.ffhandball.fr/competitions/.../rencontre-..."
+      >
+
+      <button id="searchButton">
+        Analyser
+      </button>
+
+    </div>
+
+    <div id="message"></div>
+
+  </section>
+
+
+  <section id="results" class="teams hidden">
+
+    <div class="team">
+
+      <h2 id="team1Name">
+        Équipe 1
+      </h2>
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>N°</th>
+            <th>Joueur</th>
+            <th>Buts</th>
+          </tr>
+        </thead>
+
+        <tbody id="team1Players"></tbody>
+
+      </table>
+
+    </div>
+
+
+    <div class="team">
+
+      <h2 id="team2Name">
+        Équipe 2
+      </h2>
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>N°</th>
+            <th>Joueur</th>
+            <th>Buts</th>
+          </tr>
+        </thead>
+
+        <tbody id="team2Players"></tbody>
+
+      </table>
+
+    </div>
+
+  </section>
+
+</main>
+
+
+<script>
+
+const WORKER_URL =
+  "https://svgsilent-salad-f4a2.handix-officiel.workers.dev/";
+
+
+const input = document.getElementById("matchUrl");
+const button = document.getElementById("searchButton");
+const message = document.getElementById("message");
+const results = document.getElementById("results");
+
+
+button.addEventListener("click", analyseMatch);
+
+
+input.addEventListener("keydown", function(event) {
+
+  if (event.key === "Enter") {
+    analyseMatch();
+  }
+
+});
+
+
+async function analyseMatch() {
+
+  const matchUrl = input.value.trim();
+
+  if (!matchUrl) {
+
+    showMessage(
+      "Colle d'abord une URL de rencontre FFHandball.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  if (!matchUrl.includes("ffhandball.fr")) {
+
+    showMessage(
+      "L'URL doit être une URL FFHandball.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  button.disabled = true;
+
+  results.classList.add("hidden");
+
+  showMessage(
+    "Récupération des statistiques...",
+    "loading"
+  );
+
+
+  try {
+
+    const apiUrl =
+      WORKER_URL +
+      "?url=" +
+      encodeURIComponent(matchUrl);
+
+
+    const response = await fetch(apiUrl);
+
+
+    const data = await response.json();
+
+
+    if (!response.ok || data.error) {
+
+      throw new Error(
+        data.error || "Erreur lors de la récupération."
+      );
+
+    }
+
+
+    afficherMatch(data);
+
+
+    showMessage(
+      "Statistiques récupérées avec succès.",
+      ""
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    showMessage(
+      "Erreur : " + error.message,
+      "error"
+    );
+
+  } finally {
+
+    button.disabled = false;
+
+  }
+
+}
+
+
+function afficherMatch(data) {
+
+  const joueurs = data.statsJoueurs || [];
+
+
+  document.getElementById("team1Name").textContent =
+    data.equipe1?.libelle || "Équipe 1";
+
+
+  document.getElementById("team2Name").textContent =
+    data.equipe2?.libelle || "Équipe 2";
+
+
+  const equipe1Id =
+    data.equipe1?.id;
+
+
+  const equipe2Id =
+    data.equipe2?.id;
+
+
+  const team1 = joueurs.filter(
+    joueur => String(joueur.equipeId) === String(equipe1Id)
+  );
+
+
+  const team2 = joueurs.filter(
+    joueur => String(joueur.equipeId) === String(equipe2Id)
+  );
+
+
+  afficherJoueurs(
+    document.getElementById("team1Players"),
+    team1
+  );
+
+
+  afficherJoueurs(
+    document.getElementById("team2Players"),
+    team2
+  );
+
+
+  results.classList.remove("hidden");
+
+}
+
+
+function afficherJoueurs(tbody, joueurs) {
+
+  tbody.innerHTML = "";
+
+
+  joueurs.forEach(joueur => {
+
+    const tr = document.createElement("tr");
+
+
+    const nom =
+      `${joueur.prenom || ""} ${joueur.nom || ""}`.trim();
+
+
+    tr.innerHTML = `
+
+      <td>
+        ${escapeHtml(joueur.numero || "-")}
+      </td>
+
+      <td>
+        ${escapeHtml(nom)}
+      </td>
+
+      <td class="goals">
+        ${escapeHtml(joueur.buts ?? "0")}
+      </td>
+
+    `;
+
+
+    tbody.appendChild(tr);
+
+  });
+
+}
+
+
+function escapeHtml(value) {
+
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+}
+
+
+function showMessage(text, type) {
+
+  message.textContent = text;
+
+  message.className = type;
+
+}
+
+</script>
+
+</body>
+</html>
