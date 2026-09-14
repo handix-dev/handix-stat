@@ -1,17 +1,13 @@
+```html
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>Stats Handball FFHandball</title>
+  <title>Handix Stat</title>
 
   <style>
-
     * {
       box-sizing: border-box;
     }
@@ -19,64 +15,62 @@
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
-      background: #f4f6f8;
-      color: #17202a;
+      background: #f4f5f7;
+      color: #222;
     }
 
     header {
       background: #111827;
       color: white;
-      padding: 30px 20px;
+      padding: 25px 20px;
       text-align: center;
     }
 
     header h1 {
-      margin: 0 0 10px;
-      font-size: 30px;
+      margin: 0 0 8px;
+      font-size: 28px;
     }
 
     header p {
       margin: 0;
-      opacity: 0.8;
+      color: #cbd5e1;
     }
 
     main {
       max-width: 1100px;
       margin: 30px auto;
-      padding: 0 20px;
+      padding: 0 15px;
     }
 
-    .search {
+    .box {
       background: white;
+      border-radius: 12px;
       padding: 20px;
-      border-radius: 14px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
     }
 
-    .search label {
+    label {
       display: block;
       font-weight: bold;
       margin-bottom: 8px;
     }
 
-    .search-row {
-      display: flex;
-      gap: 10px;
-    }
-
     input {
-      flex: 1;
-      padding: 14px;
-      border: 1px solid #ccd2d8;
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #ccc;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 15px;
+      margin-bottom: 12px;
     }
 
     button {
+      width: 100%;
+      padding: 13px;
       border: 0;
       border-radius: 8px;
-      padding: 14px 22px;
-      background: #2563eb;
+      background: #111827;
       color: white;
       font-size: 16px;
       font-weight: bold;
@@ -84,38 +78,68 @@
     }
 
     button:hover {
-      opacity: 0.9;
+      background: #1f2937;
     }
 
     button:disabled {
-      opacity: 0.5;
+      opacity: 0.6;
       cursor: wait;
     }
 
-    #message {
-      margin-top: 20px;
-      font-weight: bold;
+    #status {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      display: none;
+      white-space: pre-wrap;
+    }
+
+    .status-loading {
+      display: block !important;
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .status-error {
+      display: block !important;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status-success {
+      display: block !important;
+      background: #dcfce7;
+      color: #166534;
     }
 
     .teams {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
-      margin-top: 25px;
     }
 
     .team {
       background: white;
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
     }
 
-    .team h2 {
-      margin-top: 0;
+    .team-header {
+      padding: 18px;
+      background: #111827;
+      color: white;
+    }
+
+    .team-header h2 {
+      margin: 0;
       font-size: 20px;
-      border-bottom: 2px solid #eee;
-      padding-bottom: 12px;
+    }
+
+    .team-header p {
+      margin: 5px 0 0;
+      color: #cbd5e1;
+      font-size: 14px;
     }
 
     table {
@@ -123,47 +147,55 @@
       border-collapse: collapse;
     }
 
-    th {
-      text-align: left;
-      font-size: 13px;
-      color: #6b7280;
-      padding: 8px;
-      border-bottom: 1px solid #ddd;
-    }
-
+    th,
     td {
-      padding: 10px 8px;
+      padding: 10px 12px;
       border-bottom: 1px solid #eee;
+      text-align: left;
     }
 
-    td:last-child,
-    th:last-child {
+    th {
+      background: #f9fafb;
+      font-size: 13px;
+      color: #555;
+    }
+
+    td.numero {
+      width: 50px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    td.buts {
+      width: 70px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .total {
+      padding: 15px;
+      background: #f9fafb;
+      font-weight: bold;
       text-align: right;
     }
 
-    .goals {
-      font-weight: bold;
-      font-size: 18px;
-    }
-
-    .hidden {
+    .debug {
+      margin-top: 20px;
+      background: #111827;
+      color: #d1d5db;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12px;
       display: none;
     }
 
-    .error {
-      color: #dc2626;
-    }
-
-    .loading {
-      color: #2563eb;
-    }
-
     @media (max-width: 700px) {
-
-      .search-row {
-        flex-direction: column;
-      }
-
       .teams {
         grid-template-columns: 1fr;
       }
@@ -172,319 +204,708 @@
         font-size: 24px;
       }
     }
-
   </style>
 </head>
 
 <body>
 
 <header>
-
-  <h1>🤾 Statistiques Handball</h1>
-
-  <p>
-    Consulte les statistiques des joueurs d'une rencontre FFHandball
-  </p>
-
+  <h1>Handix Stat</h1>
+  <p>Statistiques des joueurs FFHandball</p>
 </header>
-
 
 <main>
 
-  <section class="search">
+  <div class="box">
 
     <label for="matchUrl">
-      URL de la rencontre FFHandball
+      URL du match FFHandball
     </label>
 
-    <div class="search-row">
+    <input
+      id="matchUrl"
+      type="url"
+      placeholder="https://www.ffhandball.fr/competitions/.../rencontre-2674905/"
+      value="https://www.ffhandball.fr/competitions/saison-2026-2027-22/regional/m004-1re-division-territoriale-masculine-32735/poule-192630/rencontre-2674905/"
+    >
 
-      <input
-        id="matchUrl"
-        type="url"
-        placeholder="https://www.ffhandball.fr/competitions/.../rencontre-..."
-      >
+    <button id="analyser">
+      Analyser le match
+    </button>
 
-      <button id="searchButton">
-        Analyser
-      </button>
+    <div id="status"></div>
 
-    </div>
+  </div>
 
-    <div id="message"></div>
+  <div id="resultats"></div>
 
-  </section>
-
-
-  <section id="results" class="teams hidden">
-
-    <div class="team">
-
-      <h2 id="team1Name">
-        Équipe 1
-      </h2>
-
-      <table>
-
-        <thead>
-          <tr>
-            <th>N°</th>
-            <th>Joueur</th>
-            <th>Buts</th>
-          </tr>
-        </thead>
-
-        <tbody id="team1Players"></tbody>
-
-      </table>
-
-    </div>
-
-
-    <div class="team">
-
-      <h2 id="team2Name">
-        Équipe 2
-      </h2>
-
-      <table>
-
-        <thead>
-          <tr>
-            <th>N°</th>
-            <th>Joueur</th>
-            <th>Buts</th>
-          </tr>
-        </thead>
-
-        <tbody id="team2Players"></tbody>
-
-      </table>
-
-    </div>
-
-  </section>
+  <pre id="debug" class="debug"></pre>
 
 </main>
 
-
 <script>
 
-const WORKER_URL =
-  "https://svgsilent-salad-f4a2.handix-officiel.workers.dev/";
+  /*
+   * ============================================================
+   * CONFIGURATION
+   * ============================================================
+   */
+
+  const WORKER_URL =
+    "https://svgsilent-salad-f4a2.handix-officiel.workers.dev/";
 
 
-const input = document.getElementById("matchUrl");
-const button = document.getElementById("searchButton");
-const message = document.getElementById("message");
-const results = document.getElementById("results");
+  /*
+   * ============================================================
+   * ELEMENTS HTML
+   * ============================================================
+   */
+
+  const input = document.getElementById("matchUrl");
+  const button = document.getElementById("analyser");
+  const status = document.getElementById("status");
+  const resultats = document.getElementById("resultats");
+  const debug = document.getElementById("debug");
 
 
-button.addEventListener("click", analyseMatch);
+  /*
+   * ============================================================
+   * AFFICHAGE DU STATUT
+   * ============================================================
+   */
 
+  function afficherStatus(message, type = "") {
 
-input.addEventListener("keydown", function(event) {
+    status.textContent = message;
 
-  if (event.key === "Enter") {
-    analyseMatch();
+    status.className = "";
+
+    if (type) {
+      status.classList.add("status-" + type);
+    }
+
   }
 
-});
+
+  /*
+   * ============================================================
+   * VERIFICATION URL FFHANDBALL
+   * ============================================================
+   */
+
+  function verifierUrl(url) {
+
+    try {
+
+      const parsed = new URL(url);
+
+      return (
+        parsed.hostname === "www.ffhandball.fr" ||
+        parsed.hostname === "ffhandball.fr"
+      );
+
+    } catch (error) {
+
+      return false;
+
+    }
+
+  }
 
 
-async function analyseMatch() {
+  /*
+   * ============================================================
+   * EXTRAIRE LES DONNEES DU HTML
+   * ============================================================
+   */
 
-  const matchUrl = input.value.trim();
+  function extraireDonnees(html) {
 
-  if (!matchUrl) {
+    /*
+     * On parse le HTML FFHandball directement
+     * dans le navigateur.
+     */
 
-    showMessage(
-      "Colle d'abord une URL de rencontre FFHandball.",
-      "error"
+    const parser = new DOMParser();
+
+    const doc = parser.parseFromString(
+      html,
+      "text/html"
     );
 
-    return;
-  }
 
+    /*
+     * Le composant qui contient les statistiques
+     * des joueurs.
+     */
 
-  if (!matchUrl.includes("ffhandball.fr")) {
-
-    showMessage(
-      "L'URL doit être une URL FFHandball.",
-      "error"
+    const component = doc.querySelector(
+      'smartfire-component[name="competitions---rencontre-liste-joueurs"]'
     );
 
-    return;
-  }
 
-
-  button.disabled = true;
-
-  results.classList.add("hidden");
-
-  showMessage(
-    "Récupération des statistiques...",
-    "loading"
-  );
-
-
-  try {
-
-    const apiUrl =
-      WORKER_URL +
-      "?url=" +
-      encodeURIComponent(matchUrl);
-
-
-    const response = await fetch(apiUrl);
-
-
-    const data = await response.json();
-
-
-    if (!response.ok || data.error) {
+    if (!component) {
 
       throw new Error(
-        data.error || "Erreur lors de la récupération."
+        "Le composant des statistiques joueurs est introuvable dans la page FFHandball."
       );
 
     }
 
 
-    afficherMatch(data);
+    /*
+     * L'attribut contient le JSON.
+     *
+     * Exemple :
+     *
+     * &quot;equipe1&quot;:{...}
+     *
+     * Il faut donc d'abord décoder les entités HTML.
+     */
+
+    let attributes =
+      component.getAttribute("attributes");
 
 
-    showMessage(
-      "Statistiques récupérées avec succès.",
-      ""
-    );
+    if (!attributes) {
+
+      throw new Error(
+        "L'attribut 'attributes' du composant est vide."
+      );
+
+    }
 
 
-  } catch (error) {
+    /*
+     * Décodage HTML :
+     *
+     * &quot;  -> "
+     * &amp;   -> &
+     * etc.
+     */
 
-    console.error(error);
+    const textarea =
+      document.createElement("textarea");
 
-    showMessage(
-      "Erreur : " + error.message,
-      "error"
-    );
+    textarea.innerHTML = attributes;
 
-  } finally {
+    attributes = textarea.value;
 
-    button.disabled = false;
+
+    /*
+     * Conversion du texte en objet JavaScript.
+     */
+
+    let data;
+
+    try {
+
+      data = JSON.parse(attributes);
+
+    } catch (error) {
+
+      console.error(
+        "JSON impossible à parser :",
+        attributes
+      );
+
+      throw new Error(
+        "Les données des joueurs ne sont pas un JSON valide."
+      );
+
+    }
+
+
+    return data;
 
   }
 
-}
+
+  /*
+   * ============================================================
+   * AFFICHER UNE EQUIPE
+   * ============================================================
+   */
+
+  function afficherEquipe(
+    equipe,
+    joueurs
+  ) {
+
+    /*
+     * On récupère les joueurs de cette équipe.
+     */
+
+    const joueursEquipe =
+      joueurs.filter(
+        joueur =>
+          String(joueur.equipeId) ===
+          String(equipe.id)
+      );
 
 
-function afficherMatch(data) {
+    /*
+     * Trier par numéro de maillot.
+     */
 
-  const joueurs = data.statsJoueurs || [];
+    joueursEquipe.sort(
+      (a, b) => {
 
+        const numeroA =
+          parseInt(a.numero) || 999;
 
-  document.getElementById("team1Name").textContent =
-    data.equipe1?.libelle || "Équipe 1";
+        const numeroB =
+          parseInt(b.numero) || 999;
 
+        return numeroA - numeroB;
 
-  document.getElementById("team2Name").textContent =
-    data.equipe2?.libelle || "Équipe 2";
-
-
-  const equipe1Id =
-    data.equipe1?.id;
-
-
-  const equipe2Id =
-    data.equipe2?.id;
+      }
+    );
 
 
-  const team1 = joueurs.filter(
-    joueur => String(joueur.equipeId) === String(equipe1Id)
-  );
+    /*
+     * Calcul du total des buts.
+     */
+
+    const totalButs =
+      joueursEquipe.reduce(
+        (total, joueur) => {
+
+          return total +
+            (parseInt(joueur.buts) || 0);
+
+        },
+        0
+      );
 
 
-  const team2 = joueurs.filter(
-    joueur => String(joueur.equipeId) === String(equipe2Id)
-  );
+    /*
+     * Génération des lignes.
+     */
+
+    let lignes = "";
 
 
-  afficherJoueurs(
-    document.getElementById("team1Players"),
-    team1
-  );
+    for (const joueur of joueursEquipe) {
+
+      const numero =
+        joueur.numero || "-";
+
+      const prenom =
+        joueur.prenom || "";
+
+      const nom =
+        joueur.nom || "";
+
+      const buts =
+        parseInt(joueur.buts) || 0;
 
 
-  afficherJoueurs(
-    document.getElementById("team2Players"),
-    team2
-  );
+      lignes += `
+        <tr>
+
+          <td class="numero">
+            ${numero}
+          </td>
+
+          <td>
+            ${prenom} ${nom}
+          </td>
+
+          <td class="buts">
+            ${buts}
+          </td>
+
+        </tr>
+      `;
+
+    }
 
 
-  results.classList.remove("hidden");
+    /*
+     * Si aucun joueur n'a été trouvé.
+     */
 
-}
+    if (joueursEquipe.length === 0) {
 
+      lignes = `
+        <tr>
+          <td colspan="3">
+            Aucun joueur trouvé pour cette équipe.
+          </td>
+        </tr>
+      `;
 
-function afficherJoueurs(tbody, joueurs) {
-
-  tbody.innerHTML = "";
-
-
-  joueurs.forEach(joueur => {
-
-    const tr = document.createElement("tr");
-
-
-    const nom =
-      `${joueur.prenom || ""} ${joueur.nom || ""}`.trim();
+    }
 
 
-    tr.innerHTML = `
+    /*
+     * HTML final de l'équipe.
+     */
 
-      <td>
-        ${escapeHtml(joueur.numero || "-")}
-      </td>
+    return `
 
-      <td>
-        ${escapeHtml(nom)}
-      </td>
+      <div class="team">
 
-      <td class="goals">
-        ${escapeHtml(joueur.buts ?? "0")}
-      </td>
+        <div class="team-header">
+
+          <h2>
+            ${equipe.libelle || "Équipe"}
+          </h2>
+
+          <p>
+            ${joueursEquipe.length} joueur(s)
+          </p>
+
+        </div>
+
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>
+                N°
+              </th>
+
+              <th>
+                Joueur
+              </th>
+
+              <th>
+                Buts
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            ${lignes}
+
+          </tbody>
+
+        </table>
+
+
+        <div class="total">
+
+          Total :
+          ${totalButs}
+          but(s)
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  /*
+   * ============================================================
+   * AFFICHER LE MATCH
+   * ============================================================
+   */
+
+  function afficherMatch(data) {
+
+    resultats.innerHTML = "";
+
+
+    /*
+     * Vérifications.
+     */
+
+    if (!data) {
+
+      throw new Error(
+        "Aucune donnée reçue."
+      );
+
+    }
+
+
+    if (!data.statsJoueurs) {
+
+      throw new Error(
+        "La liste statsJoueurs est absente."
+      );
+
+    }
+
+
+    if (!data.equipe1) {
+
+      throw new Error(
+        "L'équipe 1 est absente."
+      );
+
+    }
+
+
+    if (!data.equipe2) {
+
+      throw new Error(
+        "L'équipe 2 est absente."
+      );
+
+    }
+
+
+    const joueurs =
+      data.statsJoueurs;
+
+
+    /*
+     * Création des deux équipes.
+     */
+
+    const html = `
+
+      <div class="teams">
+
+        ${afficherEquipe(
+          data.equipe1,
+          joueurs
+        )}
+
+        ${afficherEquipe(
+          data.equipe2,
+          joueurs
+        )}
+
+      </div>
 
     `;
 
 
-    tbody.appendChild(tr);
+    resultats.innerHTML = html;
 
-  });
-
-}
+  }
 
 
-function escapeHtml(value) {
+  /*
+   * ============================================================
+   * ANALYSER LE MATCH
+   * ============================================================
+   */
 
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+  async function analyserMatch() {
 
-}
+    const matchUrl =
+      input.value.trim();
 
 
-function showMessage(text, type) {
+    /*
+     * Nettoyage.
+     */
 
-  message.textContent = text;
+    resultats.innerHTML = "";
 
-  message.className = type;
+    debug.style.display = "none";
+    debug.textContent = "";
 
-}
+
+    /*
+     * Vérification URL.
+     */
+
+    if (!matchUrl) {
+
+      afficherStatus(
+        "Entre l'URL d'un match FFHandball.",
+        "error"
+      );
+
+      return;
+
+    }
+
+
+    if (!verifierUrl(matchUrl)) {
+
+      afficherStatus(
+        "L'URL doit être une URL FFHandball.",
+        "error"
+      );
+
+      return;
+
+    }
+
+
+    /*
+     * Désactiver le bouton pendant la requête.
+     */
+
+    button.disabled = true;
+
+
+    afficherStatus(
+      "Récupération de la page FFHandball...",
+      "loading"
+    );
+
+
+    try {
+
+      /*
+       * --------------------------------------------------------
+       * 1. On demande au Worker de récupérer la page FFHandball
+       * --------------------------------------------------------
+       */
+
+      const proxyUrl =
+        WORKER_URL +
+        "?url=" +
+        encodeURIComponent(matchUrl);
+
+
+      const response =
+        await fetch(proxyUrl);
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          "Le Worker a répondu avec le code HTTP " +
+          response.status
+        );
+
+      }
+
+
+      /*
+       * --------------------------------------------------------
+       * 2. On récupère le HTML brut
+       * --------------------------------------------------------
+       */
+
+      const html =
+        await response.text();
+
+
+      if (!html) {
+
+        throw new Error(
+          "La réponse du Worker est vide."
+        );
+
+      }
+
+
+      /*
+       * --------------------------------------------------------
+       * 3. Scraping côté GitHub / navigateur
+       * --------------------------------------------------------
+       */
+
+      const data =
+        extraireDonnees(html);
+
+
+      /*
+       * --------------------------------------------------------
+       * 4. Affichage
+       * --------------------------------------------------------
+       */
+
+      afficherMatch(data);
+
+
+      /*
+       * Succès.
+       */
+
+      afficherStatus(
+        "Match analysé avec succès.",
+        "success"
+      );
+
+
+      /*
+       * Debug disponible dans la console.
+       */
+
+      console.log(
+        "Données FFHandball :",
+        data
+      );
+
+
+    } catch (error) {
+
+      console.error(error);
+
+
+      afficherStatus(
+        "Erreur : " +
+        error.message,
+        "error"
+      );
+
+
+      /*
+       * Afficher quelques informations utiles
+       * pour le debug.
+       */
+
+      debug.style.display = "block";
+
+      debug.textContent =
+        error.stack ||
+        error.message;
+
+    } finally {
+
+      button.disabled = false;
+
+    }
+
+  }
+
+
+  /*
+   * ============================================================
+   * EVENEMENT BOUTON
+   * ============================================================
+   */
+
+  button.addEventListener(
+    "click",
+    analyserMatch
+  );
+
+
+  /*
+   * ============================================================
+   * ENTREE
+   *
+   * Permet d'appuyer sur Entrée dans le champ URL.
+   * ============================================================
+   */
+
+  input.addEventListener(
+    "keydown",
+    event => {
+
+      if (event.key === "Enter") {
+
+        analyserMatch();
+
+      }
+
+    }
+  );
 
 </script>
 
 </body>
 </html>
+```
