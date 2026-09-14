@@ -4,15 +4,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Handix Stat</title>
+  <meta name="description" content="Suivez les statistiques des joueurs et matchs de handball avec Handix.">
+  <title>Handix - Statistiques Match</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
 
-  <!-- Font Awesome pour les icônes -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- RemixIcon (Identique à clubs.html) -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 
   <!-- Feuille de style externe -->
   <link rel="stylesheet" href="style.css">
@@ -21,27 +22,24 @@
 <body>
 
   <header>
-    <div class="header-content">
-      <div class="logo">Handix Stat</div>
-    </div>
     <div class="welcome-section">
-      <p class="welcome-text">Statistiques des joueurs</p>
-      <h1 class="welcome-title">FFHandball</h1>
+      <div class="welcome-title">HANDIX</div>
+      <div class="welcome-text">Statistiques des matchs FFHandball</div>
     </div>
   </header>
 
   <main>
-    <div class="page">
+    <section class="page">
       <!-- Barre de recherche -->
       <div class="search-container">
         <input 
           id="matchUrl" 
           type="url" 
           class="search-input" 
-          placeholder="Collez l'URL du match FFHandball" 
+          placeholder="Collez l'URL du match FFHandball..." 
         />
         <button id="analyser" class="search-button" title="Analyser le match">
-          <i class="fa-solid fa-magnifying-glass"></i>
+          <i class="ri-search-line"></i>
         </button>
       </div>
 
@@ -53,297 +51,30 @@
 
       <!-- Zone de débogage -->
       <pre id="debug" class="debug error-message" style="display: none; text-align: left; overflow-x: auto;"></pre>
-    </div>
+    </section>
   </main>
 
-  <script>
-    /*
-     * ============================================================
-     * CONFIGURATION
-     * ============================================================
-     */
-    const WORKER_URL = "https://silent-salad-f4a2.handix-officiel.workers.dev/";
+  <!-- Navigation bottom (Identique à clubs.html) -->
+  <nav class="bottom-nav">
+    <div class="nav-item" onclick="window.location.href='salles.html'">
+      <div class="nav-icon"><i class="ri-map-pin-line"></i></div>
+      <div class="nav-label">Salles</div>
+    </div>
+    <div class="nav-item" onclick="window.location.href='clubs.html'">
+      <div class="nav-icon"><i class="ri-team-line"></i></div>
+      <div class="nav-label">Clubs</div>
+    </div>
+    <div class="nav-item active" onclick="window.location.href='index.html'">
+      <div class="nav-icon"><i class="ri-bar-chart-box-line"></i></div>
+      <div class="nav-label">Stats</div>
+    </div>
+    <div class="nav-item" onclick="window.location.href='matchs.html'">
+      <div class="nav-icon"><i class="ri-trophy-line"></i></div>
+      <div class="nav-label">Matchs</div>
+    </div>
+  </nav>
 
-    /*
-     * ============================================================
-     * ELEMENTS
-     * ============================================================
-     */
-    const input = document.getElementById("matchUrl");
-    const button = document.getElementById("analyser");
-    const status = document.getElementById("status");
-    const resultats = document.getElementById("resultats");
-    const debug = document.getElementById("debug");
-
-    /*
-     * ============================================================
-     * STATUS
-     * ============================================================
-     */
-    function afficherStatus(message, type = "") {
-      status.className = "";
-      status.innerHTML = "";
-
-      if (!type) return;
-
-      if (type === "loading") {
-        status.innerHTML = `
-          <div class="loading">
-            <div class="spinner"></div>
-            <p>${message}</p>
-          </div>
-        `;
-      } else if (type === "error") {
-        status.innerHTML = `
-          <div class="error-message">
-            <i class="fa-solid fa-circle-exclamation" style="font-size: 24px; margin-bottom: 8px;"></i>
-            <p>${message}</p>
-          </div>
-        `;
-      } else if (type === "success") {
-        status.innerHTML = `
-          <div class="notification-item notification-unread" style="border-left-color: var(--success);">
-            <div class="notification-header">
-              <span class="notification-title"><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Succès</span>
-            </div>
-            <div class="notification-content">${message}</div>
-          </div>
-        `;
-      }
-    }
-
-    /*
-     * ============================================================
-     * VERIFICATION URL
-     * ============================================================
-     */
-    function verifierUrl(url) {
-      try {
-        const parsed = new URL(url);
-        return (
-          parsed.hostname === "www.ffhandball.fr" ||
-          parsed.hostname === "ffhandball.fr"
-        );
-      } catch {
-        return false;
-      }
-    }
-
-    /*
-     * ============================================================
-     * EXTRACTION DES DONNEES
-     * ============================================================
-     */
-    function extraireDonnees(html) {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-
-      const component = doc.querySelector(
-        'smartfire-component[name="competitions---rencontre-liste-joueurs"]'
-      );
-
-      if (!component) {
-        throw new Error("Le composant des statistiques joueurs est introuvable.");
-      }
-
-      let attributes = component.getAttribute("attributes");
-
-      if (!attributes) {
-        throw new Error("L'attribut attributes est vide.");
-      }
-
-      const textarea = document.createElement("textarea");
-      textarea.innerHTML = attributes;
-      attributes = textarea.value;
-
-      let data;
-      try {
-        data = JSON.parse(attributes);
-      } catch (error) {
-        console.error("JSON reçu :", attributes);
-        throw new Error("Impossible de convertir les données joueurs en JSON.");
-      }
-
-      return data;
-    }
-
-    /*
-     * ============================================================
-     * AFFICHAGE D'UNE EQUIPE
-     * ============================================================
-     */
-    function afficherEquipe(equipe, joueurs) {
-      const joueursEquipe = joueurs.filter(
-        joueur => String(joueur.equipeId) === String(equipe.id)
-      );
-
-      joueursEquipe.sort((a, b) => {
-        const numeroA = parseInt(a.numero) || 999;
-        const numeroB = parseInt(b.numero) || 999;
-        return numeroA - numeroB;
-      });
-
-      const totalButs = joueursEquipe.reduce((total, joueur) => {
-        return total + (parseInt(joueur.buts) || 0);
-      }, 0);
-
-      let cartesJoueurs = "";
-
-      for (const joueur of joueursEquipe) {
-        const numero = joueur.numero || "-";
-        const prenom = joueur.prenom || "";
-        const nom = joueur.nom || "";
-        const buts = parseInt(joueur.buts) || 0;
-
-        cartesJoueurs += `
-          <div class="favorite-item">
-            <div class="favorite-item-content">
-              <div class="favorite-item-icon">
-                ${numero}
-              </div>
-              <div class="favorite-item-name">
-                ${prenom} ${nom}
-              </div>
-            </div>
-            <div class="score-container winner-score">
-              <span class="match-score">${buts}</span>
-            </div>
-          </div>
-        `;
-      }
-
-      if (joueursEquipe.length === 0) {
-        cartesJoueurs = `
-          <div class="no-results" style="padding: 20px;">
-            <p>Aucun joueur trouvé pour cette équipe.</p>
-          </div>
-        `;
-      }
-
-      return `
-        <div class="card">
-          <div class="card-header">
-            <div class="card-icon">
-              <i class="fa-solid fa-shirt"></i>
-            </div>
-            <div class="card-title">
-              <span style="font-size: 16px; font-weight: 800;">${equipe.libelle || "Équipe"}</span>
-              <br>
-              <span style="font-size: 12px; font-weight: 400; color: var(--text-muted);">
-                ${joueursEquipe.length} joueur(s)
-              </span>
-            </div>
-            <div class="card-badge">
-              Total: ${totalButs} goal(s)
-            </div>
-          </div>
-          
-          <div class="card-details">
-            <div class="favorites-list">
-              ${cartesJoueurs}
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    /*
-     * ============================================================
-     * AFFICHAGE DU MATCH
-     * ============================================================
-     */
-    function afficherMatch(data) {
-      resultats.innerHTML = "";
-
-      if (!data) throw new Error("Aucune donnée reçue.");
-      if (!data.statsJoueurs) throw new Error("statsJoueurs est absent des données.");
-      if (!data.equipe1) throw new Error("equipe1 est absente.");
-      if (!data.equipe2) throw new Error("equipe2 est absente.");
-
-      resultats.innerHTML = `
-        <div class="section-header">
-          <h2 class="section-title">Feuille de match</h2>
-        </div>
-        ${afficherEquipe(data.equipe1, data.statsJoueurs)}
-        ${afficherEquipe(data.equipe2, data.statsJoueurs)}
-      `;
-    }
-
-    /*
-     * ============================================================
-     * ANALYSE DU MATCH
-     * ============================================================
-     */
-    async function analyserMatch() {
-      const matchUrl = input.value.trim();
-
-      resultats.innerHTML = "";
-      debug.style.display = "none";
-      debug.textContent = "";
-
-      if (!matchUrl) {
-        afficherStatus("Collez d'abord l'URL d'un match FFHandball.", "error");
-        return;
-      }
-
-      if (!verifierUrl(matchUrl)) {
-        afficherStatus("L'URL doit être une URL FFHandball valide.", "error");
-        return;
-      }
-
-      button.disabled = true;
-      afficherStatus("Récupération des données du match...", "loading");
-
-      try {
-        const proxyUrl = WORKER_URL + "?url=" + encodeURIComponent(matchUrl);
-
-        const response = await fetch(proxyUrl);
-
-        if (!response.ok) {
-          const erreur = await response.text();
-          throw new Error(
-            "Worker HTTP " + response.status + " : " + erreur.substring(0, 300)
-          );
-        }
-
-        const html = await response.text();
-
-        if (!html) {
-          throw new Error("Le Worker a renvoyé une réponse vide.");
-        }
-
-        const data = extraireDonnees(html);
-
-        afficherMatch(data);
-        afficherStatus("Match analysé avec succès !", "success");
-
-      } catch (error) {
-        console.error(error);
-
-        afficherStatus("Erreur : " + error.message, "error");
-
-        debug.style.display = "block";
-        debug.textContent = error.stack || error.message;
-
-      } finally {
-        button.disabled = false;
-      }
-    }
-
-    /*
-     * ============================================================
-     * ÉVÉNEMENTS
-     * ============================================================
-     */
-    button.addEventListener("click", analyserMatch);
-
-    input.addEventListener("keydown", event => {
-      if (event.key === "Enter") {
-        analyserMatch();
-      }
-    });
-  </script>
-
+  <script src="script.js"></script>
 </body>
 
 </html>
