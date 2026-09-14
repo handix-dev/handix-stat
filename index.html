@@ -243,8 +243,7 @@
       <input
         id="matchUrl"
         type="url"
-        placeholder="https://www.ffhandball.fr/competitions/.../rencontre-2674905/"
-        value="https://www.ffhandball.fr/competitions/saison-2026-2027-22/regional/m004-1re-division-territoriale-masculine-32735/poule-192630/rencontre-2674905/"
+        placeholder="Collez ici l'URL du match FFHandball"
       >
 
       <button id="analyser">
@@ -271,6 +270,7 @@
      * CONFIGURATION
      * ============================================================
      */
+
     const WORKER_URL =
       "https://silent-salad-f4a2.handix-officiel.workers.dev/";
 
@@ -355,10 +355,6 @@
 
     function extraireDonnees(html) {
 
-      /*
-       * Parse le HTML FFHandball
-       */
-
       const parser =
         new DOMParser();
 
@@ -370,8 +366,7 @@
 
 
       /*
-       * Cherche le composant contenant
-       * les statistiques joueurs.
+       * Recherche du composant joueurs.
        */
 
       const component =
@@ -383,14 +378,14 @@
       if (!component) {
 
         throw new Error(
-          "Le composant competitions---rencontre-liste-joueurs est introuvable."
+          "Le composant des statistiques joueurs est introuvable."
         );
 
       }
 
 
       /*
-       * Récupère l'attribut attributes.
+       * Récupération de l'attribut JSON.
        */
 
       let attributes =
@@ -409,10 +404,7 @@
 
 
       /*
-       * Décodage des entités HTML :
-       *
-       * &quot; -> "
-       * &amp;  -> &
+       * Décodage des entités HTML.
        */
 
       const textarea =
@@ -428,7 +420,7 @@
 
 
       /*
-       * Conversion en JSON.
+       * Conversion JSON.
        */
 
       let data;
@@ -441,7 +433,7 @@
       } catch (error) {
 
         console.error(
-          "Attribut reçu :",
+          "JSON reçu :",
           attributes
         );
 
@@ -467,10 +459,6 @@
       equipe,
       joueurs
     ) {
-
-      /*
-       * Les joueurs appartenant à l'équipe.
-       */
 
       const joueursEquipe =
         joueurs.filter(
@@ -516,7 +504,7 @@
 
 
       /*
-       * Création des lignes.
+       * Lignes du tableau.
        */
 
       let lignes = "";
@@ -563,10 +551,6 @@
       }
 
 
-      /*
-       * Aucun joueur.
-       */
-
       if (
         joueursEquipe.length === 0
       ) {
@@ -585,10 +569,6 @@
 
       }
 
-
-      /*
-       * HTML de l'équipe.
-       */
 
       return `
 
@@ -702,22 +682,18 @@
       }
 
 
-      const joueurs =
-        data.statsJoueurs;
-
-
       resultats.innerHTML = `
 
         <div class="teams">
 
           ${afficherEquipe(
             data.equipe1,
-            joueurs
+            data.statsJoueurs
           )}
 
           ${afficherEquipe(
             data.equipe2,
-            joueurs
+            data.statsJoueurs
           )}
 
         </div>
@@ -729,7 +705,7 @@
 
     /*
      * ============================================================
-     * ANALYSE
+     * ANALYSE DU MATCH
      * ============================================================
      */
 
@@ -739,10 +715,6 @@
         input.value.trim();
 
 
-      /*
-       * Nettoyage.
-       */
-
       resultats.innerHTML = "";
 
       debug.style.display = "none";
@@ -751,13 +723,13 @@
 
 
       /*
-       * Vérification.
+       * URL obligatoire.
        */
 
       if (!matchUrl) {
 
         afficherStatus(
-          "Entre une URL de match FFHandball.",
+          "Collez d'abord l'URL d'un match FFHandball.",
           "error"
         );
 
@@ -765,6 +737,10 @@
 
       }
 
+
+      /*
+       * Vérification FFHandball.
+       */
 
       if (!verifierUrl(matchUrl)) {
 
@@ -790,12 +766,7 @@
       try {
 
         /*
-         * ======================================================
-         * APPEL DU WORKER
-         * ======================================================
-         *
-         * Le Worker récupère le HTML FFHandball
-         * et nous le renvoie.
+         * URL envoyée au Worker.
          */
 
         const proxyUrl =
@@ -812,6 +783,10 @@
         );
 
 
+        /*
+         * Appel du Worker.
+         */
+
         const response =
           await fetch(
             proxyUrl
@@ -827,16 +802,17 @@
             "Worker HTTP " +
             response.status +
             " : " +
-            erreur.substring(0, 300)
+            erreur.substring(
+              0,
+              300
+            )
           );
 
         }
 
 
         /*
-         * ======================================================
-         * HTML BRUT
-         * ======================================================
+         * HTML FFHandball.
          */
 
         const html =
@@ -860,9 +836,7 @@
 
 
         /*
-         * ======================================================
-         * SCRAPING COTE GITHUB
-         * ======================================================
+         * Scraping côté navigateur.
          */
 
         const data =
@@ -871,26 +845,14 @@
           );
 
 
-        /*
-         * Affichage console pour vérifier.
-         */
-
         console.log(
           "Données extraites :",
           data
         );
 
 
-        console.log(
-          "Joueurs :",
-          data.statsJoueurs
-        );
-
-
         /*
-         * ======================================================
-         * AFFICHAGE
-         * ======================================================
+         * Affichage.
          */
 
         afficherMatch(
@@ -949,7 +911,7 @@
 
     /*
      * ============================================================
-     * ENTREE
+     * TOUCHE ENTREE
      * ============================================================
      */
 
