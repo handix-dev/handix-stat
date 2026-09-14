@@ -1,5 +1,152 @@
 /*
  * ============================================================
+ * CONFIGURATION & ELEMENTS
+ * ============================================================
+ */
+const WORKER_URL = "https://silent-salad-f4a2.handix-officiel.workers.dev/";
+
+const input = document.getElementById("matchUrl");
+const button = document.getElementById("analyser");
+const status = document.getElementById("status");
+const resultats = document.getElementById("resultats");
+const debug = document.getElementById("debug");
+
+
+/*
+ * ============================================================
+ * GESTION DE L'AFFICHAGE D'ÉTAT
+ * ============================================================
+ */
+function afficherStatus(message, type = "") {
+  status.className = "";
+  status.innerHTML = "";
+
+  if (!type) return;
+
+  if (type === "loading") {
+    status.innerHTML = `
+      <div class="loading">
+        <div class="spinner"></div>
+        <div>${message}</div>
+      </div>
+    `;
+  } else if (type === "error") {
+    status.innerHTML = `
+      <div class="error-message">
+        <i class="ri-error-warning-line" style="font-size: 24px; display: block; margin-bottom: 6px;"></i>
+        <div>${message}</div>
+      </div>
+    `;
+  } else if (type === "success") {
+    status.innerHTML = `
+      <div class="success-message">
+        <i class="ri-checkbox-circle-line" style="margin-right: 6px;"></i>${message}
+      </div>
+    `;
+  }
+}
+
+
+/*
+ * ============================================================
+ * VALIDEUR D'URL
+ * ============================================================
+ */
+function verifierUrl(url) {
+  try {
+    const parsed = new URL(url);
+
+    return (
+      parsed.hostname === "www.ffhandball.fr" ||
+      parsed.hostname === "ffhandball.fr"
+    );
+
+  } catch {
+    return false;
+  }
+}
+
+
+/*
+ * ============================================================
+ * EXTRACTION DES DONNÉES DU DOM PARSÉ
+ * ============================================================
+ */
+function extraireDonnees(html) {
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  /*
+   * Composant joueurs
+   */
+  const joueursComponent = doc.querySelector(
+    'smartfire-component[name="competitions---rencontre-liste-joueurs"]'
+  );
+
+  if (!joueursComponent) {
+    throw new Error(
+      "Le composant des statistiques joueurs est introuvable sur la page."
+    );
+  }
+
+  let attributesJoueurs = joueursComponent.getAttribute("attributes");
+
+  if (!attributesJoueurs) {
+    throw new Error("Les données du match sont vides.");
+  }
+
+  /* Décodage des entités HTML */
+  const textareaJoueurs = document.createElement("textarea");
+  textareaJoueurs.innerHTML = attributesJoueurs;
+  attributesJoueurs = textareaJoueurs.value;
+
+  let joueursData;
+
+  try {
+    joueursData = JSON.parse(attributesJoueurs);
+  } catch (error) {
+    console.error("JSON joueurs brut :", attributesJoueurs);
+    throw new Error("Impossible d'analyser le format JSON des joueurs.");
+  }
+
+  /*
+   * Composant score / logos
+   */
+  const scoreComponent = doc.querySelector(
+    'smartfire-component[name="competitions---competition-score"]'
+  );
+
+  let scoreData = null;
+
+  if (scoreComponent) {
+    let attributesScore = scoreComponent.getAttribute("attributes");
+
+    if (attributesScore) {
+      const textareaScore = document.createElement("textarea");
+      textareaScore.innerHTML = attributesScore;
+      attributesScore = textareaScore.value;
+
+      try {
+        scoreData = JSON.parse(attributesScore);
+      } catch (error) {
+        console.warn(
+          "Impossible de lire les données du composant score.",
+          error
+        );
+      }
+    }
+  }
+
+  return {
+    ...joueursData,
+    score: scoreData
+  };
+}
+
+
+/*
+ * ============================================================
  * RENDU D'UNE ÉQUIPE
  * ============================================================
  */
@@ -80,6 +227,7 @@ function afficherEquipe(equipe, joueurs, logo = null) {
   `;
 }
 
+
 /*
  * ============================================================
  * RENDU DU MATCH COMPLET ET BANNIÈRE SCORE
@@ -97,7 +245,7 @@ function afficherMatch(data) {
   const logoEquipe1 = data.score?.home?.flag?.url || null;
   const logoEquipe2 = data.score?.away?.flag?.url || null;
 
-  /* Scores généraux (depuis le composant score s'il existe, sinon calcul via le cumul des buts) */
+  /* Calcul des scores */
   const scoreEquipe1 = data.score?.home?.score ?? data.statsJoueurs
     .filter(j => String(j.equipeId) === String(data.equipe1.id))
     .reduce((t, j) => t + (parseInt(j.buts) || 0), 0);
@@ -114,7 +262,7 @@ function afficherMatch(data) {
     ? `<img src="${logoEquipe2}" alt="Logo ${data.equipe2.libelle}" style="width: 52px; height: 52px; object-fit: contain;">`
     : `<div class="card-icon" style="margin: 0;"><i class="ri-team-line"></i></div>`;
 
-  /* Bannières du Match */
+  /* Bannière de présentation du match */
   const matchHeaderHTML = `
     <div class="card" style="margin-bottom: 20px; text-align: center;">
       <div style="display: flex; align-items: center; justify-content: space-around; gap: 12px;">
@@ -149,7 +297,7 @@ function afficherMatch(data) {
     </div>
   `;
 
-  /* Affichage de la bannière + cartes joueurs */
+  /* Assemblage du contenu */
   resultats.innerHTML = `
     ${matchHeaderHTML}
 
@@ -163,3 +311,117 @@ function afficherMatch(data) {
     ${afficherEquipe(data.equipe2, data.statsJoueurs, logoEquipe2)}
   `;
 }
+
+
+/*
+ * ============================================================
+ * LOGIQUE PRINCIPALE D'ANALYSE
+ * ============================================================
+ */
+async function analyserMatch() {
+
+  const matchUrl = input.value.trim();
+
+  resultats.innerHTML = "";
+  debug.style.display = "none";
+  debug.textContent = "";
+
+  if (!matchUrl) {
+    afficherStatus(
+      "Collez l'URL d'un match FFHandball.",
+      "error"
+    );
+    return;
+  }
+
+  if (!verifierUrl(matchUrl)) {
+    afficherStatus(
+      "L'URL doit être une URL FFHandball valide.",
+      "error"
+    );
+    return;
+  }
+
+  button.disabled = true;
+
+  afficherStatus(
+    "Chargement des statistiques...",
+    "loading"
+  );
+
+  try {
+    const proxyUrl =
+      WORKER_URL +
+      "?url=" +
+      encodeURIComponent(matchUrl);
+
+    const response = await fetch(proxyUrl);
+
+    if (!response.ok) {
+      const erreur = await response.text();
+
+      throw new Error(
+        "Erreur Worker HTTP " +
+        response.status +
+        " : " +
+        erreur.substring(0, 200)
+      );
+    }
+
+    const html = await response.text();
+
+    if (!html) {
+      throw new Error(
+        "La réponse reçue est vide."
+      );
+    }
+
+    const data = extraireDonnees(html);
+
+    console.log("Données match :", data);
+
+    afficherMatch(data);
+
+    afficherStatus(
+      "Statistiques chargées avec succès !",
+      "success"
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    afficherStatus(
+      "Erreur : " + error.message,
+      "error"
+    );
+
+    debug.style.display = "block";
+    debug.textContent = error.stack || error.message;
+
+  } finally {
+
+    button.disabled = false;
+
+  }
+}
+
+
+/*
+ * ============================================================
+ * ÉVÉNEMENTS
+ * ============================================================
+ */
+button.addEventListener(
+  "click",
+  analyserMatch
+);
+
+input.addEventListener(
+  "keydown",
+  event => {
+    if (event.key === "Enter") {
+      analyserMatch();
+    }
+  }
+);
