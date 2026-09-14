@@ -1,6 +1,6 @@
 /*
  * ============================================================
- * CONFIGURATION & ELEMENTS
+ * CONFIGURATION & ÉLÉMENTS
  * ============================================================
  */
 const WORKER_URL = "https://silent-salad-f4a2.handix-officiel.workers.dev/";
@@ -11,7 +11,6 @@ const status = document.getElementById("status");
 const vueListe = document.getElementById("vueListe");
 const vueDetail = document.getElementById("vueDetail");
 const detailContenu = document.getElementById("detailContenu");
-const btnRetour = document.getElementById("btnRetour");
 const debug = document.getElementById("debug");
 
 let listeMatchsPoule = [];
@@ -96,7 +95,7 @@ function extraireDonnees(html) {
     }
   }
 
-  // Rematch
+  // Rematch (Date, Heure, Journée)
   const rematchComponent = doc.querySelector('smartfire-component[name="competitions---rematch"]');
   let rematchData = null;
   if (rematchComponent) {
@@ -166,7 +165,7 @@ async function explorerPoule() {
   const baseId = parseInt(urlParts[2], 10);
   const endUrl = urlParts[3] || "";
 
-  // Scan vers l'AVANT
+  // Scan vers l'AVANT (IDs croissants)
   let erreursConsecutives = 0;
   let currentId = baseId + 1;
 
@@ -184,7 +183,7 @@ async function explorerPoule() {
     currentId++;
   }
 
-  // Scan vers l'ARRIÈRE
+  // Scan vers l'ARRIÈRE (IDs décroissants)
   erreursConsecutives = 0;
   currentId = baseId - 1;
 
@@ -216,7 +215,6 @@ async function explorerPoule() {
 function afficherListeParJournee() {
   vueListe.innerHTML = "";
 
-  // Groupement par journeeNumero
   const journeesMap = new Map();
 
   listeMatchsPoule.forEach(match => {
@@ -227,14 +225,13 @@ function afficherListeParJournee() {
     journeesMap.get(numJournee).push(match);
   });
 
-  // Tri des journées numériquement
-  const clesTriées = Array.from(journeesMap.keys()).sort((a, b) => {
+  const clesTriees = Array.from(journeesMap.keys()).sort((a, b) => {
     if (a === "Non classés") return 1;
     if (b === "Non classés") return -1;
     return parseInt(a) - parseInt(b);
   });
 
-  clesTriées.forEach(numJournee => {
+  clesTriees.forEach(numJournee => {
     const titreHeader = document.createElement("div");
     titreHeader.className = "section-header";
     titreHeader.style.marginTop = "16px";
@@ -266,7 +263,6 @@ function afficherListeParJournee() {
       const img1 = logo1 ? `<img src="${logo1}" style="width: 24px; height: 24px; object-fit: contain; flex-shrink: 0;">` : `<i class="ri-team-line" style="font-size: 20px;"></i>`;
       const img2 = logo2 ? `<img src="${logo2}" style="width: 24px; height: 24px; object-fit: contain; flex-shrink: 0;">` : `<i class="ri-team-line" style="font-size: 20px;"></i>`;
 
-      // Formater la date
       let dateString = "";
       if (match.rematch?.rencontre?.date) {
         const d = new Date(match.rematch.rencontre.date.replace(" ", "T"));
@@ -286,18 +282,15 @@ function afficherListeParJournee() {
         
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
           
-          <!-- Équipe Domicile -->
           <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px;">
             ${img1}
             <span style="font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eq1}">${eq1}</span>
           </div>
 
-          <!-- Score -->
           <div style="font-size: 16px; font-weight: 800; color: var(--primary); padding: 2px 8px; flex-shrink: 0; background: rgba(0,0,0,0.03); border-radius: 6px; white-space: nowrap;">
             ${score1} : ${score2}
           </div>
 
-          <!-- Équipe Extérieur -->
           <div style="flex: 1; min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 6px; text-align: right;">
             <span style="font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eq2}">${eq2}</span>
             ${img2}
@@ -314,7 +307,7 @@ function afficherListeParJournee() {
 
 /*
  * ============================================================
- * AFFICHAGE DÉTAIL D'UN MATCH
+ * AFFICHAGE DÉTAIL MATCH
  * ============================================================
  */
 function afficherEquipe(equipe, joueurs, logo = null) {
@@ -395,27 +388,43 @@ function afficherDetailMatch(index) {
     : `<div class="card-icon" style="margin: 0;"><i class="ri-team-line"></i></div>`;
 
   detailContenu.innerHTML = `
-    <div class="card" style="margin-bottom: 20px; padding: 14px; text-align: center;">
+    <div class="card" style="margin-bottom: 20px; padding: 16px; text-align: center;">
+      
+      <!-- Bouton Retour Centré -->
+      <div style="display: flex; justify-content: center; margin-bottom: 12px;">
+        <button id="btnRetourInCard" class="search-button" style="width: auto; padding: 6px 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;" type="button">
+          <i class="ri-arrow-left-line"></i> Retour aux matchs
+        </button>
+      </div>
+
+      <!-- Journée / Date -->
       ${journeeTexte || dateFormatted ? `
-        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px;">
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px;">
           ${journeeTexte} ${journeeTexte && dateFormatted ? "•" : ""} ${dateFormatted}
         </div>
       ` : ""}
 
+      <!-- Équipes et Score -->
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;">
           ${logoHTML1}
-          <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); line-height: 1.2; text-align: center; width: 100%; word-break: break-word;">${data.equipe1.libelle}</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); line-height: 1.2; text-align: center; width: 100%; word-break: break-word;">
+            ${data.equipe1.libelle}
+          </div>
         </div>
 
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; padding: 0 4px;">
-          <div style="font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: 0.5px; white-space: nowrap;">${scoreEquipe1} : ${scoreEquipe2}</div>
+          <div style="font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: 0.5px; white-space: nowrap;">
+            ${scoreEquipe1} : ${scoreEquipe2}
+          </div>
           <span style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-top: 2px;">Score final</span>
         </div>
 
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;">
           ${logoHTML2}
-          <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); line-height: 1.2; text-align: center; width: 100%; word-break: break-word;">${data.equipe2.libelle}</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); line-height: 1.2; text-align: center; width: 100%; word-break: break-word;">
+            ${data.equipe2.libelle}
+          </div>
         </div>
       </div>
     </div>
@@ -428,6 +437,11 @@ function afficherDetailMatch(index) {
     ${afficherEquipe(data.equipe2, data.statsJoueurs, logoEquipe2)}
   `;
 
+  document.getElementById("btnRetourInCard").addEventListener("click", () => {
+    vueDetail.style.display = "none";
+    vueListe.style.display = "block";
+  });
+
   vueListe.style.display = "none";
   vueDetail.style.display = "block";
 }
@@ -435,9 +449,4 @@ function afficherDetailMatch(index) {
 button.addEventListener("click", explorerPoule);
 input.addEventListener("keydown", event => {
   if (event.key === "Enter") explorerPoule();
-});
-
-btnRetour.addEventListener("click", () => {
-  vueDetail.style.display = "none";
-  vueListe.style.display = "block";
 });
