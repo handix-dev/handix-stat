@@ -229,7 +229,7 @@ async function explorerPoule() {
 
   button.disabled = false;
   afficherStatus(`${listeMatchsPoule.length} match(s) analysés.`, "success");
-  
+
   classementToggles.style.display = "block";
   calculerEtAfficherTout();
 }
@@ -314,7 +314,7 @@ function genererClassementEquipes() {
   classement.forEach((eq, index) => {
     const diff = eq.bp - eq.bc;
     const diffTexte = diff > 0 ? `+${diff}` : `${diff}`;
-    
+
     const formeHTML = eq.forme.slice(-5).map(f => {
       let bg = "#e63946";
       if (f === "V") bg = "#2a9d8f";
@@ -428,14 +428,14 @@ function afficherOnglet(tab) {
     vueEquipes.style.display = "block";
     vueButeurs.style.display = "none";
     subToggleButeurs.style.display = "none";
-    
+
     btnTabEquipes.classList.add("active");
     btnTabButeurs.classList.remove("active");
   } else {
     vueEquipes.style.display = "none";
     vueButeurs.style.display = "block";
     subToggleButeurs.style.display = "flex";
-    
+
     btnTabButeurs.classList.add("active");
     btnTabEquipes.classList.remove("active");
   }
