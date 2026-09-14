@@ -13,8 +13,94 @@ const vueDetail = document.getElementById("vueDetail");
 const detailContenu = document.getElementById("detailContenu");
 const debug = document.getElementById("debug");
 
-let listeMatchsPoule = [];
+const pouleActions = document.getElementById("pouleActions");
+const btnAjouterFavori = document.getElementById("btnAjouterFavori");
+const favorisPouleContainer = document.getElementById("favorisPouleContainer");
+const favorisPouleList = document.getElementById("favorisPouleList");
 
+let listeMatchsPoule = [];
+let urlPouleCourante = "";
+
+/*
+ * ============================================================
+ * GESTION DU LOCALSTORAGE (FAVORIS)
+ * ============================================================
+ */
+function getFavoris() {
+  try {
+    return JSON.parse(localStorage.getItem("handix_favoris_poules")) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFavoris(favoris) {
+  localStorage.setItem("handix_favoris_poules", JSON.stringify(favoris));
+  afficherFavorisBarre();
+}
+
+function ajouterFavoriPoule() {
+  if (!urlPouleCourante) return;
+
+  const nom = prompt("Entrez un nom pour cette poule (ex: Seniors G1, U18 F) :");
+  if (!nom || !nom.trim()) return;
+
+  const favoris = getFavoris();
+  const existe = favoris.some(f => f.url === urlPouleCourante);
+
+  if (existe) {
+    alert("Cette poule est déjà dans vos favoris.");
+    return;
+  }
+
+  favoris.push({ nom: nom.trim(), url: urlPouleCourante });
+  saveFavoris(favoris);
+}
+
+function supprimerFavoriPoule(url, event) {
+  event.stopPropagation();
+  let favoris = getFavoris();
+  favoris = favoris.filter(f => f.url !== url);
+  saveFavoris(favoris);
+}
+
+function chargerPouleFavori(url) {
+  input.value = url;
+  explorerPoule();
+}
+
+function afficherFavorisBarre() {
+  const favoris = getFavoris();
+  favorisPouleList.innerHTML = "";
+
+  if (favoris.length === 0) {
+    favorisPouleContainer.style.display = "none";
+    return;
+  }
+
+  favorisPouleContainer.style.display = "block";
+
+  favoris.forEach(fav => {
+    const chip = document.createElement("div");
+    chip.className = "poule-chip";
+    chip.innerHTML = `
+      <i class="ri-layout-grid-fill" style="color: var(--primary); font-size: 14px;"></i>
+      <span>${fav.nom}</span>
+      <span class="poule-chip-delete" title="Supprimer"><i class="ri-close-line"></i></span>
+    `;
+
+    chip.addEventListener("click", () => chargerPouleFavori(fav.url));
+    chip.querySelector(".poule-chip-delete").addEventListener("click", (e) => supprimerFavoriPoule(fav.url, e));
+
+    favorisPouleList.appendChild(chip);
+  });
+}
+
+/*
+ * ============================================================
+ * UTILITIES ET EXTRACTION
+ * ============================================================
+ */
 function afficherStatus(message, type = "") {
   status.className = "";
   status.innerHTML = "";
@@ -83,7 +169,6 @@ function extraireDonnees(html) {
     return null;
   }
 
-  // Score
   const scoreComponent = doc.querySelector('smartfire-component[name="competitions---competition-score"]');
   let scoreData = null;
   if (scoreComponent) {
@@ -95,7 +180,6 @@ function extraireDonnees(html) {
     }
   }
 
-  // Rematch (Date, Heure, Journée)
   const rematchComponent = doc.querySelector('smartfire-component[name="competitions---rematch"]');
   let rematchData = null;
   if (rematchComponent) {
@@ -134,6 +218,7 @@ async function explorerPoule() {
   vueListe.innerHTML = "";
   vueDetail.style.display = "none";
   vueListe.style.display = "block";
+  pouleActions.style.display = "none";
   listeMatchsPoule = [];
 
   if (!verifierUrl(targetUrl)) {
@@ -141,6 +226,7 @@ async function explorerPoule() {
     return;
   }
 
+  urlPouleCourante = targetUrl;
   button.disabled = true;
   afficherStatus("Analyse du match de départ...", "loading");
 
@@ -165,7 +251,7 @@ async function explorerPoule() {
   const baseId = parseInt(urlParts[2], 10);
   const endUrl = urlParts[3] || "";
 
-  // Scan vers l'AVANT (IDs croissants)
+  // Scan avant
   let erreursConsecutives = 0;
   let currentId = baseId + 1;
 
@@ -183,7 +269,7 @@ async function explorerPoule() {
     currentId++;
   }
 
-  // Scan vers l'ARRIÈRE (IDs décroissants)
+  // Scan arrière
   erreursConsecutives = 0;
   currentId = baseId - 1;
 
@@ -203,13 +289,14 @@ async function explorerPoule() {
 
   button.disabled = false;
   afficherStatus(`${listeMatchsPoule.length} match(s) trouvé(s) !`, "success");
+  pouleActions.style.display = "flex";
 
   afficherListeParJournee();
 }
 
 /*
  * ============================================================
- * AFFICHAGE DES MATCHS REGROUPÉS PAR JOURNÉE
+ * AFFICHAGE DES MATCHS
  * ============================================================
  */
 function afficherListeParJournee() {
@@ -305,11 +392,6 @@ function afficherListeParJournee() {
   });
 }
 
-/*
- * ============================================================
- * AFFICHAGE DÉTAIL MATCH
- * ============================================================
- */
 function afficherEquipe(equipe, joueurs, logo = null) {
   const joueursEquipe = joueurs.filter(j => String(j.equipeId) === String(equipe.id));
   joueursEquipe.sort((a, b) => (parseInt(a.numero) || 999) - (parseInt(b.numero) || 999));
@@ -390,21 +472,18 @@ function afficherDetailMatch(index) {
   detailContenu.innerHTML = `
     <div class="card" style="margin-bottom: 20px; padding: 16px; text-align: center;">
       
-      <!-- Bouton Retour Centré -->
       <div style="display: flex; justify-content: center; margin-bottom: 12px;">
         <button id="btnRetourInCard" class="search-button" style="width: auto; padding: 6px 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;" type="button">
           <i class="ri-arrow-left-line"></i> Retour aux matchs
         </button>
       </div>
 
-      <!-- Journée / Date -->
       ${journeeTexte || dateFormatted ? `
         <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px;">
           ${journeeTexte} ${journeeTexte && dateFormatted ? "•" : ""} ${dateFormatted}
         </div>
       ` : ""}
 
-      <!-- Équipes et Score -->
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;">
           ${logoHTML1}
@@ -446,7 +525,16 @@ function afficherDetailMatch(index) {
   vueDetail.style.display = "block";
 }
 
+/*
+ * ============================================================
+ * ÉVÉNEMENTS
+ * ============================================================
+ */
 button.addEventListener("click", explorerPoule);
 input.addEventListener("keydown", event => {
   if (event.key === "Enter") explorerPoule();
 });
+btnAjouterFavori.addEventListener("click", ajouterFavoriPoule);
+
+// Initialisation des favoris au chargement de la page
+afficherFavorisBarre();
